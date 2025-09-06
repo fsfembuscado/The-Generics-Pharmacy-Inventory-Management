@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGP Pharmacy</title>
+    
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'landingpage/landingpagestyles.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="100">
+        </div>
+        <nav>
+            <ul>    
+                <li><a href="{% url 'landingpage' %}" class="active">HOME</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
+                <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'contact' %}">CONTACT US</a></li>
+            </ul>
+        </nav>
+        <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
+    </header>
+
+    <section class="body">
+        <h1>PHARMACY</h1>
+        <p>LANDING PAGE</p>
+    </section>
+</body>
+</html>

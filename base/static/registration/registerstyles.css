@@ -1,0 +1,152 @@
+body{
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+}
+
+nav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 50px;
+    background-color: transparent;
+}
+
+.logo img{
+    width: 100px;
+    height: auto;
+}
+
+.nav-links{
+    list-style: none;
+    display: flex;
+    gap: 30px;
+}
+
+.nav-links li{
+    display: inline-block;
+}
+
+.nav-links a{
+    text-decoration: none;
+    color: #000;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover{
+    color: #e60000;
+}
+
+.login-btn{
+    padding: 8px 20px;
+    border: 2px solid #e60000;
+    border-radius: 8px;
+    color: #000;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.login-btn:hover{
+    background-color: #e60000;
+    color: #fff;
+}
+
+.form-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+.form-box{
+    background-color: #e6e6e6;
+    padding: 40px;
+    border-radius: 20px;
+    width: 400px;
+    text-align: center;
+}
+
+.title{
+    font-size: 28px;
+    font-weight: normal;
+    color: #000;
+    margin: 0;
+}
+
+.title sup{
+    color: #e60000;
+    font-size: 16px;
+    vertical-align: super;
+}
+
+.subtitle{
+    font-size: 18px;
+    margin: 10px 0 30px;
+    font-weight: 500;
+    color: #000;
+}
+
+.subtitle .highlight{
+    color: #e60000;
+}
+
+form p{
+    text-align: left;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+form label{
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    margin-bottom: 5px;
+    color: #333;
+}
+
+form input[type="text"], form input[type="password"], form input[type="email"]{
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.btn{
+    background-color: #e60000;
+    color: #fff;
+    padding: 12px;
+    width: 100%;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: normal;
+    transition: background 0.3s ease;
+}
+
+.btn:hover{
+    background-color: #cc0000;
+}
+
+hr{
+    margin: 20px 0;
+    border: none;
+    border-top: 1px solid #000;
+}
+.register-text{
+    font-size: 14px;
+    color: #333;
+}
+
+.register-text a{
+    color: #e60000;
+    text-decoration: none;
+    font-weight: normal;
+}
+
+.register-text a:hover{
+    text-decoration: underline;
+}

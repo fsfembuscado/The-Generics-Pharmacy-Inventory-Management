@@ -1,0 +1,158 @@
+body{
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background-color: #f3f3f3;
+}
+
+header{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 60px;
+    background: #f3f3f3;
+}
+
+.logo img{
+    width: 100px;
+    height: auto;
+}
+
+nav ul{
+    list-style: none;
+    display: flex;
+    gap: 40px;
+}
+
+nav ul li a{
+    text-decoration: none;
+    color: black;
+    font-size: 14px;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover{
+    color: red;
+}
+
+.login-btn{
+    border: 2px solid red;
+    padding: 6px 18px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: black;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.login-btn:hover{
+    background-color: red;
+    color: white;
+}
+
+nav ul li a.active{
+    border-bottom: 2px solid red;
+}
+
+.login-container{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80vh;
+}
+
+.login-box{
+    background: #e6e6e6;
+    padding: 40px;
+    border-radius: 20px;
+    width: 350px;
+    text-align: center;
+}
+
+.brand{
+    font-size: 32px;
+    font-weight: bold;
+    color: black;
+}
+
+.brand .plus{
+    color: red;
+}
+
+h3{
+    margin: 10px 0;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+h3 .highlight{
+    color: red;
+}
+
+.subtitle{
+    font-size: 14px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+form{
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+form label{
+    margin: 10px 0 5px;
+    font-size: 13px;
+    color: #333;
+}
+
+form input{
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.login-btn-submit{
+    background: red;
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.login-btn-submit:hover{
+    background: darkred;
+}
+
+.divider{
+    margin: 20px 0;
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.divider::before, .divider::after{
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid black;
+}
+
+.divider span{
+    padding: 0 10px;
+    font-size: 12px;
+    color: #444;
+}
+
+.register-text{
+    font-size: 13px;
+}
+
+.register-text a{
+    color: red;
+    text-decoration: none;
+    font-weight: normal;
+}

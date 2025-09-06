@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TGP Register</title>
+
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/loginstyles.css' %}">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="100">
+        </div>
+
+        <nav>
+            <ul>
+                <li><a href="{% url 'landingpage' %}">HOME</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
+                <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'contact' %}">CONTACT US</a></li>
+            </ul>
+        </nav>
+
+        <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
+    </header>
+
+    <!-- Signup Box -->
+    <div class="login-container">
+        <div class="login-box">
+            <div class="logo">
+                <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="100">
+            </div>
+            <h3>Create your <span class="highlight">Account</span></h3>
+            <p class="subtitle">Sign up to access Inventory Management</p>
+
+            <form method="POST">
+                {% csrf_token %}
+                <label for="username">Username:</label>
+                <input type="text" name="username" required>
+
+                <label for="email">Email:</label>
+                <input type="email" name="email" required>
+
+                <label for="password1">Password:</label>
+                <input type="password" name="password1" required>
+
+                <label for="password2">Confirm Password:</label>
+                <input type="password" name="password2" required>
+
+                <button type="submit" class="login-btn-submit">SIGN UP</button>
+            </form>
+
+            <div class="divider"><span>or</span></div>
+            <p class="register-text">
+                Already have an account? <a href="{% url 'login' %}">Login</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>

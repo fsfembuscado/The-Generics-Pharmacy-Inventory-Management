@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'dashboard/dashboardstyles.css' %}">
+</head>
+<body>
+<div class="container">
+
+    <div class="sidebar" id="sidebar">
+        <div class="logo-container">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="100">
+            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+        </div>
+        <ul class="menu">
+            <li class="active"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+            <li><a href="{% url 'user-list' %}">User Accounts</a></li>
+            <li><a href="{% url 'update-account' %}">Update Account</a></li>
+            <li><a href="{% url 'update-password' %}">Update Password</a></li>
+            <li><a>
+                <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn-logout">Logout</button>
+                </form>
+            </a></li>
+        </ul>
+    </div>
+
+    <div class="main-content">
+        {% if request.user.is_authenticated %}
+            <h1>Welcome, <strong>{{ request.user }}</strong></h1>
+        {% else %}
+            <a href="{% url 'login' %}">Login</a>
+        {% endif %}
+
+        <h1>Dashboard</h1>
+        <p>You have <strong>{{ count }}</strong> incomplete tasks.</p>
+
+        <a href="{% url 'task-create' %}" class="btn-add">+ Add Task</a>
+
+        <form method="GET">
+            <input type="text" name="search-area" value="{{ search_input }}" placeholder="Search tasks...">
+            <input type="submit" value="Search" class="btn-search">
+        </form>
+
+        <table>
+            <tr>
+                <th>Items</th>
+                <th></th>
+                <th></th>
+                <th></th>
+            </tr>
+            {% for task in tasks %}
+                <tr>
+                    <td>
+                        {% if task.complete %}
+                            ✅ <s>{{ task.title }}</s>
+                        {% else %}
+                            ⏳ {{ task.title }}
+                        {% endif %}
+                    </td>
+                    <td><a href="{% url 'task' task.id %}">View</a></td>
+                    <td><a href="{% url 'task-update' task.id %}">Edit</a></td>
+                    <td><a href="{% url 'task-delete' task.id %}">Delete</a></td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="4">No tasks in list</td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+</script>
+</body>
+</html>
