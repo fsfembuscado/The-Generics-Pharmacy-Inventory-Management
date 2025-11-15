@@ -44,8 +44,23 @@
 </table>
 
 <p>
-  <a href="{% url 'transfer' %}">Make another transfer</a> |
-  <a href="{% url 'dashboard' %}">Back to dashboard</a>
+  <a href="{% url 'transfer' %}" class="btn btn-red">Make another transfer</a>
+  <a href="{% url 'dashboard' %}" class="btn btn-red" style="margin-left:8px;">Back to dashboard</a>
 </p>
+
+<style>
+.btn-red {
+    display:inline-block;
+    background:#c40000;
+    color:#fff !important;
+    padding:8px 14px;
+    border-radius:4px;
+    text-decoration:none;
+    font-weight:600;
+    font-size:14px;
+    transition:background .2s ease-in-out;
+}
+.btn-red:hover, .btn-red:focus { background:#a00000; color:#fff !important; }
+</style>
 
 {% endblock %}

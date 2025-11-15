@@ -95,6 +95,26 @@
             </ul>
         </li>
 
+        <!-- Orders -->
+        <li class="dropdown {% if request.resolver_match.url_name == 'ordering-list' or request.resolver_match.url_name == 'ordering-create' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-orders')">
+                Orders
+            </a>
+            <ul id="dropdown-orders" class="dropdown-menu {% if request.resolver_match.url_name == 'ordering-list' or request.resolver_match.url_name == 'ordering-create' %}open{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'ordering-create' %}active{% endif %}">
+                    <a href="{% url 'ordering-create' %}">New Order</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'ordering-list' %}active{% endif %}">
+                    <a href="{% url 'ordering-list' %}">Order List</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Notifications -->
+        <li class="{% if request.resolver_match.url_name == 'notification-list' %}active{% endif %}">
+            <a href="{% url 'notification-list' %}">Notifications</a>
+        </li>
+
         <li>
             <form method="POST" action="{% url 'logout' %}" style="display:inline;">
                 {% csrf_token %}
