@@ -2190,6 +2190,9 @@ class TransferView(LoginRequiredMixin, UserPassesTestMixin, View):
             "overall_leftover": overall_leftover,
             "movements": movements_collect,
             "transfer_branch": transfer_branch,
+            # Ensure sidebar shows full manager/admin items
+            "is_manager_or_admin": is_manager_or_admin(request.user),
+            "user_role": get_user_role_display(request.user),
         })
 
 # --------------------------- PRICE HISTORY VIEW ---------------------------
