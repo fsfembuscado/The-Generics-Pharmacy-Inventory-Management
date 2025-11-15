@@ -1,0 +1,44 @@
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.env
+.env.*
+*.env
+.venv/
+venv/
+env/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Python tooling
+.mypy_cache/
+.pytest_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Node
+node_modules/
+
+# Django
+staticfiles/
+media/
+
+# Databases (SQLite)
+*.sqlite3
+/db.sqlite3
+/db.*.sqlite3
+/db.backup-*.sqlite3
+
+# Logs
+*.log

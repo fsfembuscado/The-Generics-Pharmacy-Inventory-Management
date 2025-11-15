@@ -1,0 +1,20 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr; gap: 15px; padding: 20px; }
+.modal-grid label { display: flex; flex-direction: column; font-weight: 500; }
+.modal-grid input, .modal-grid select { margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 20px 20px; }
+</style>
+
+<form method="post" id="batch-update-form" data-type="batch" action="{% url 'batch-update-modal' batch.id %}">
+    {% csrf_token %}
+    <h3 style="margin-top:0; padding: 20px 20px 10px;">Edit Batch</h3>
+    <div class="modal-grid">
+        <label>Medicine {{ form.medicine }}</label>
+        <label>Quantity {{ form.quantity }}</label>
+        <label>Expiry Date {{ form.expiry_date }}</label>
+    </div>
+    <div class="modal-actions">
+        <button type="submit" class="btn-edit" style="background:#4CAF50;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Save</button>
+        <button type="button" class="block-btn" style="padding:10px 20px;border-radius:4px;cursor:pointer;" onclick="closeModal()">Cancel</button>
+    </div>
+</form>

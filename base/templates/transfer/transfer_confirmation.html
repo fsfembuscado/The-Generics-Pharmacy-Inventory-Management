@@ -1,0 +1,51 @@
+{% extends "dashboard/dashboard.html" %}
+{% block content %}
+<h1>Transfer Confirmation</h1>
+
+{% if overall_leftover %}
+  <div class="alert-warning">
+    Some items could not be fully transferred due to insufficient stock. See details below.
+  </div>
+{% else %}
+  <div class="alert-success">
+    All requested transfers processed successfully.
+  </div>
+{% endif %}
+
+<table>
+  <thead>
+    <tr>
+      <th>Medicine</th>
+      <th>Requested</th>
+      <th>Unit</th>
+      <th>Leftover (pieces)</th>
+      <th>Movement IDs</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in summary %}
+      <tr>
+        <td>{{ row.medicine.name }}</td>
+        <td>{{ row.requested_qty }}</td>
+        <td>{{ row.unit }}</td>
+        <td>{{ row.leftover_pieces }}</td>
+        <td>
+          {% if row.created_movements %}
+            {% for m in row.created_movements %}
+              {{ m.id }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          {% else %}
+            N/A
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p>
+  <a href="{% url 'transfer' %}">Make another transfer</a> |
+  <a href="{% url 'dashboard' %}">Back to dashboard</a>
+</p>
+
+{% endblock %}

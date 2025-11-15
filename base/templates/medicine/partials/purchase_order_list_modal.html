@@ -1,0 +1,84 @@
+<style>
+.po-list-container { padding: 20px; max-height: 70vh; overflow-y: auto; }
+.po-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+.po-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.po-table th, .po-table td { padding: 10px; text-align: left; border-bottom: 1px solid #ddd; }
+.po-table th { background: #f5f5f5; font-weight: 600; }
+.po-table tr:hover { background: #f9f9f9; }
+.status-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+.status-draft { background: #e0e0e0; color: #424242; }
+.status-ordered { background: #b3e5fc; color: #01579b; }
+.status-delivery { background: #fff9c4; color: #f57f17; }
+.status-received { background: #c8e6c9; color: #2e7d32; }
+.status-cancelled { background: #ffcdd2; color: #c62828; }
+.po-actions { display: flex; gap: 5px; }
+.po-btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; }
+.po-btn-edit { background: #2196F3; color: white; }
+.po-btn-delete { background: #f44336; color: white; }
+.order-section { margin-bottom: 30px; }
+.order-header { background: #e3f2fd; padding: 15px; border-radius: 4px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.line-items { margin-left: 20px; margin-bottom: 10px; }
+.line-item { padding: 8px; background: #f9f9f9; margin-bottom: 5px; border-left: 3px solid #2196F3; display: flex; justify-content: space-between; }
+</style>
+
+<div class="po-list-container">
+    <div class="po-header">
+        <h3 style="margin: 0;">Purchase Orders</h3>
+        <button type="button" class="btn-create" onclick="openAddOrderForm()" style="padding: 8px 15px; background: #4CAF50; color: white; border: none; border-radius: 4px; cursor: pointer;">+ Add Order</button>
+    </div>
+    
+    {% if purchase_orders %}
+        {% for po in purchase_orders %}
+        <div class="order-section">
+            <div class="order-header">
+                <div>
+                    <strong>Order #{{ po.id }}</strong> - 
+                    {% if po.status == 'Draft' %}
+                        <span class="status-badge status-draft">Draft</span>
+                    {% elif po.status == 'Ordered' %}
+                        <span class="status-badge status-ordered">Ordered</span>
+                    {% elif po.status == 'In Delivery' %}
+                        <span class="status-badge status-delivery">In Delivery</span>
+                    {% elif po.status == 'Received' %}
+                        <span class="status-badge status-received">Received</span>
+                    {% elif po.status == 'Cancelled' %}
+                        <span class="status-badge status-cancelled">Cancelled</span>
+                    {% endif %}
+                    <span style="margin-left: 10px; color: #666;">{{ po.po_date|date:"M d, Y" }}</span>
+                </div>
+                <div class="po-actions">
+                    <button type="button" class="po-btn po-btn-edit" onclick="editOrderStatus('{{ po.id }}', '{{ po.status }}')">Update Status</button>
+                    <form method="post" action="{% url 'purchase-order-delete' po.id %}" style="display: inline;" onsubmit="return confirm('Delete this order?');">
+                        {% csrf_token %}
+                        <button type="submit" class="po-btn po-btn-delete">Delete</button>
+                    </form>
+                </div>
+            </div>
+            <div class="line-items">
+                {% for line in po.lines.all %}
+                <div class="line-item">
+                    <span><strong>{{ line.medicine.name }}</strong> - {{ line.quantity_ordered }} {{ line.unit }}</span>
+                    <span>₱{{ line.line_total|floatformat:2 }}</span>
+                </div>
+                {% empty %}
+                <div style="color: #999; padding: 10px;">No items in this order</div>
+                {% endfor %}
+            </div>
+            {% if po.notes %}
+            <div style="margin-left: 20px; color: #666; font-size: 13px; padding: 5px;">
+                <strong>Notes:</strong> {{ po.notes }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% else %}
+        <div style="text-align: center; padding: 40px; color: #999; background: #f9f9f9; border-radius: 8px;">
+            <div style="font-size: 48px; margin-bottom: 15px;">📦</div>
+            <p style="margin: 0;">No purchase orders yet. Click "📦 Add Order" to create your first order.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div style="padding: 0 20px 20px; text-align: right;">
+    <button type="button" class="block-btn" onclick="closeModal()" style="padding: 10px 20px; border-radius: 4px;">Close</button>
+</div>

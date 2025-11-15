@@ -1,0 +1,116 @@
+<div class="sidebar" id="sidebar">
+    <div class="logo-container">
+        {% load static %}
+        <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo">
+    </div>
+    <ul class="menu">
+        <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+        </li>
+        
+        {% if is_manager_or_admin %}
+        <li class="{% if request.resolver_match.url_name == 'user-list' %}active{% endif %}">
+            <a href="{% url 'user-list' %}">User Accounts</a>
+        </li>
+        <li class="{% if request.resolver_match.url_name == 'medicine-list' %}active{% endif %}">
+            <a href="{% url 'medicine-list' %}">Product</a>
+        </li>
+
+        <!-- Purchase Orders -->
+        <li class="dropdown {% if request.resolver_match.url_name == 'purchase-order-list' or request.resolver_match.url_name == 'purchase-order-add' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-po')">
+                Purchase Orders
+            </a>
+            <ul id="dropdown-po" class="dropdown-menu {% if request.resolver_match.url_name == 'purchase-order-list' or request.resolver_match.url_name == 'purchase-order-add' %}open{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'purchase-order-add' %}active{% endif %}">
+                    <a href="{% url 'purchase-order-add' %}">New Order</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'purchase-order-list' %}active{% endif %}">
+                    <a href="{% url 'purchase-order-list' %}">View Orders</a>
+                </li>
+            </ul>
+        </li>
+        {% endif %}
+
+        <!-- Stock Analysis -->
+        <li class="dropdown {% if request.resolver_match.url_name == 'transfer' or request.resolver_match.url_name == 'batch-list' or request.resolver_match.url_name == 'actual-inventory' or request.resolver_match.url_name == 'expiration-monitor' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-stock')">
+                Stock Analysis
+            </a>
+            <ul id="dropdown-stock" class="dropdown-menu {% if request.resolver_match.url_name == 'transfer' or request.resolver_match.url_name == 'batch-list' or request.resolver_match.url_name == 'actual-inventory' or request.resolver_match.url_name == 'expiration-monitor' %}open{% endif %}">
+                {% if is_manager_or_admin %}
+                <li class="{% if request.resolver_match.url_name == 'transfer' %}active{% endif %}">
+                    <a href="{% url 'transfer' %}">Stock Transfer</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'batch-list' %}active{% endif %}">
+                    <a href="{% url 'batch-list' %}">Stock Batches</a>
+                </li>
+                {% endif %}
+                <li class="{% if request.resolver_match.url_name == 'actual-inventory' %}active{% endif %}">
+                    <a href="{% url 'actual-inventory' %}">Inventory</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'expiration-monitor' %}active{% endif %}">
+                    <a href="{% url 'expiration-monitor' %}">Expiration</a>
+                </li>
+            </ul>
+        </li>
+
+        <!-- Logs -->
+        {% if is_manager_or_admin %}
+        <li class="dropdown {% if request.resolver_match.url_name == 'activity-logs' or request.resolver_match.url_name == 'movement-list' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-logs')">
+                Logs
+            </a>
+            <ul id="dropdown-logs" class="dropdown-menu {% if request.resolver_match.url_name == 'activity-logs' or request.resolver_match.url_name == 'movement-list' %}open{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'activity-logs' %}active{% endif %}">
+                    <a href="{% url 'activity-logs' %}">Activity Logs</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'movement-list' %}active{% endif %}">
+                    <a href="{% url 'movement-list' %}">Stock Movement</a>
+                </li>
+            </ul>
+        </li>
+        {% endif %}
+
+        <!-- Sales -->
+        <li class="dropdown {% if request.resolver_match.url_name == 'dispense' or request.resolver_match.url_name == 'sales-report' or request.resolver_match.url_name == 'price-history' or request.resolver_match.url_name == 'refund-list' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-sales')">
+                Sales
+            </a>
+            <ul id="dropdown-sales" class="dropdown-menu {% if request.resolver_match.url_name == 'dispense' or request.resolver_match.url_name == 'sales-report' or request.resolver_match.url_name == 'price-history' or request.resolver_match.url_name == 'refund-list' %}open{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'dispense' %}active{% endif %}">
+                    <a href="{% url 'dispense' %}">Dispense</a>
+                </li>
+                {% if is_manager_or_admin %}
+                <li class="{% if request.resolver_match.url_name == 'sales-report' %}active{% endif %}">
+                    <a href="{% url 'sales-report' %}">Sales Report</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'price-history' %}active{% endif %}">
+                    <a href="{% url 'price-history' %}">Price History</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'refund-list' %}active{% endif %}">
+                    <a href="{% url 'refund-list' %}">Refunds</a>
+                </li>
+                {% endif %}
+            </ul>
+        </li>
+
+        <li>
+            <form method="POST" action="{% url 'logout' %}" style="display:inline;">
+                {% csrf_token %}
+                <button type="submit" class="btn-logout">Logout</button>
+            </form>
+        </li>
+    </ul>
+</div>
+
+<script>
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    const dropdownLi = dropdown.parentElement;
+    
+    // Toggle the 'open' class on both the dropdown menu and the parent li
+    dropdown.classList.toggle('open');
+    dropdownLi.classList.toggle('open');
+}
+</script>

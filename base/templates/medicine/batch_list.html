@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Batches</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+
+    <div class="main-content">
+        <h2>Stock Batches</h2>
+
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div style="padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+                                {% if message.tags == 'success' %}background: #d4edda; color: #155724;{% endif %}
+                                {% if message.tags == 'error' %}background: #f8d7da; color: #721c24;{% endif %}
+                                {% if message.tags == 'info' %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="search-form">
+            <form method="get" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" name="search" placeholder="Search batches..." value="{{ request.GET.search }}" style="flex: 1;">
+                <button type="submit">Search</button>
+            </form>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'batch-receive' %}" style="background: #d32f2f; color: white; text-decoration: none; display: inline-block; line-height: 1.5; border: none; cursor: pointer; padding: 10px 20px; border-radius: 4px; font-weight: 500;">+ Add Batch</a>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Quantity (Boxes)</th>
+                        <th>Location</th>
+                        <th>Expiry Date</th>
+                        <th>Date Received</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for batch in batches %}
+                    <tr>
+                        <td>{{ batch.medicine.name }} ({{ batch.medicine.brand|default:"-" }})</td>
+                        <td>{{ batch.quantity }}</td>
+                        <td>
+                            {% if batch.location == 'front' %}
+                                <span class="role-badge role-staff">Store Shelf</span>
+                            {% else %}
+                                <span class="role-badge role-user">Stock Room</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ batch.expiry_date|date:"M d, Y"|default:"-" }}</td>
+                        <td>{{ batch.date_received|date:"M d, Y" }}</td>
+                        <td>
+                            {% if batch.is_recalled %}
+                                <span class="status blocked">Recalled</span>
+                            {% elif batch.location == 'front' %}
+                                <span class="status active">Active</span>
+                            {% else %}
+                                <span class="status" style="background: #fff9c4; color: #f57f17;">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="action-buttons">
+                                <button type="button" class="block-btn" data-url="{% url 'batch-update-modal' batch.id %}" onclick="openModal(this.getAttribute('data-url'))">Edit</button>
+                                {% if not batch.is_recalled and batch.quantity > 0 %}
+                                    <button type="button" class="block-btn" style="background:#ff9800;" data-url="{% url 'batch-recall-modal' batch.id %}" onclick="openModal(this.getAttribute('data-url'))" title="Recall damaged/defective items">🚨 Recall</button>
+                                {% endif %}
+                                <form action="{% url 'batch-delete' batch.id %}" method="post" style="display:inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="block-btn" onclick="return confirm('Are you sure you want to delete this batch?')">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center;">No stock batches found.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        const dropdownLi = dropdown.parentElement;
+        
+        // Toggle the 'open' class on both the dropdown menu and the parent li
+        dropdown.classList.toggle('open');
+        dropdown.classList.toggle('show');
+        dropdownLi.classList.toggle('open');
+    }
+    }
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.dropdown')) {
+            var allDropdowns = document.querySelectorAll('.dropdown-menu');
+            var allParents = document.querySelectorAll('.dropdown');
+            allDropdowns.forEach(function(dd) {
+                dd.classList.remove('show');
+            });
+            allParents.forEach(function(parent) {
+                parent.classList.remove('open');
+            });
+        }
+    });
+</script>
+
+<script>
+    // Reuse modal logic from medicine list
+    function openModal(fetchUrl) {
+        const modal = document.getElementById('generic-modal');
+        const modalContent = document.getElementById('generic-modal-content');
+        modalContent.innerHTML = '<div style="padding:20px;">Loading...</div>';
+        modal.style.display = 'flex';
+        fetch(fetchUrl, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(data => {
+                if (data.html) {
+                    modalContent.innerHTML = data.html;
+                    attachModalFormHandler(modalContent);
+                } else {
+                    modalContent.innerHTML = '<div style="padding:20px;color:red;">Failed to load form.</div>';
+                }
+            })
+            .catch(err => {
+                modalContent.innerHTML = '<div style="padding:20px;color:red;">Error loading form.</div>';
+            });
+    }
+    function closeModal() {
+        const modal = document.getElementById('generic-modal');
+        modal.style.display = 'none';
+    }
+    function attachModalFormHandler(container) {
+        const form = container.querySelector('form');
+        if (!form) return;
+        form.addEventListener('submit', function(e){
+            e.preventDefault();
+            const formData = new FormData(form);
+            fetch(form.getAttribute('action'), {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                body: formData
+            }).then(r => r.json())
+              .then(data => {
+                  if (data.success) {
+                      closeModal();
+                      window.location.reload();
+                  } else if (data.html) {
+                      container.innerHTML = data.html;
+                      attachModalFormHandler(container);
+                  } else {
+                      alert('Save failed');
+                  }
+              }).catch(()=>alert('Network error'));
+        });
+    }
+    window.addEventListener('click', function(e){
+        const modal = document.getElementById('generic-modal');
+        if (e.target === modal) closeModal();
+    });
+    
+    function openAddOrderForm() {
+        const modal = document.getElementById('generic-modal');
+        const modalContent = document.getElementById('generic-modal-content');
+        modalContent.innerHTML = '<div style="padding:20px;">Loading...</div>';
+        modal.style.display = 'flex';
+        fetch('/purchase-order/add-modal/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(data => {
+                if (data.html) {
+                    modalContent.innerHTML = data.html;
+                } else if (data.error) {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(err => {
+                console.error('Error loading order form:', err);
+                alert('Failed to load order form: ' + err.message);
+            });
+    }
+    
+    function viewPurchaseOrders() {
+        const modal = document.getElementById('generic-modal');
+        const modalContent = document.getElementById('generic-modal-content');
+        modalContent.innerHTML = '<div style="padding:20px;">Loading...</div>';
+        modal.style.display = 'flex';
+        fetch('/purchase-order/list-modal/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+            .then(r => r.json())
+            .then(data => {
+                if (data.html) {
+                    modalContent.innerHTML = data.html;
+                } else {
+                    modalContent.innerHTML = '<div style="padding:20px;color:red;">Failed to load purchase orders.</div>';
+                }
+            })
+            .catch(err => {
+                modalContent.innerHTML = '<div style="padding:20px;color:red;">Error loading purchase orders.</div>';
+            });
+    }
+    
+    function editOrderStatus(poId, currentStatus) {
+        const newStatus = prompt('Update order status:\n\nCurrent: ' + currentStatus + '\n\nEnter new status (Draft, Ordered, In Delivery, Received, Cancelled):', currentStatus);
+        if (newStatus && newStatus !== currentStatus) {
+            fetch(`/purchase-order/${poId}/update-status/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({status: newStatus})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    viewPurchaseOrders();
+                } else {
+                    alert('Failed to update status');
+                }
+            });
+        }
+    }
+</script>
+
+<div id="generic-modal" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:1000;">
+    <div id="generic-modal-content" style="background:#fff;min-width:480px;max-width:800px;width:70%;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.3);overflow-y:auto;max-height:90vh;padding:10px;">
+        <!-- Dynamic content injected here -->
+    </div>
+</div>
+
+</body>
+</html>

@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TGP Pharmacy</title>
-    
+
     {% load static %}
+    <link rel="stylesheet" href="{% static 'landingpage/navigationbarlanding.css' %}">
     <link rel="stylesheet" href="{% static 'landingpage/landingpagestyles.css' %}">
 </head>
 <body>
@@ -16,17 +17,86 @@
         <nav>
             <ul>    
                 <li><a href="{% url 'landingpage' %}" class="active">HOME</a></li>
-                <li><a href="{% url 'services' %}">SERVICES</a></li>
                 <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
                 <li><a href="{% url 'contact' %}">CONTACT US</a></li>
             </ul>
         </nav>
         <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
     </header>
 
-    <section class="body">
-        <h1>PHARMACY</h1>
-        <p>LANDING PAGE</p>
+    <!-- HERO SECTION -->
+    <section class="hero">
+        <div class="hero-text">
+            <h2>PARA SA LAHAT <br><span>QUALITY GENERICS YOU CAN TRUST</span></h2>
+            <p>
+                Affordable, FDA approved medicine available in over <strong>2,000 branches nationwide</strong>, 
+                bringing quality healthcare closer to every Filipino family. Wherever you are in the city or the 
+                province, TGP tagapagtanggol ng kalusugan is here to make kalusugan para sa lahat.
+            </p>
+        </div>
+        <div class="hero-image">
+            <div class="circle-bg"></div>
+            <img src="{% static 'landingpage/photo/pharmacists.png' %}" alt="Two Pharmacists">
+        </div>
     </section>
+
+    <!-- WHY PAY MORE SECTION -->
+    <section class="why-pay">
+        <h2>Why <span>PAY</span> more? Choose Generics and Save</h2>
+        <div class="why-grid">
+            <div class="why-item">
+                <h3>Same Quality</h3>
+                <p>All TGP medicines meet FDA standards and provide the same healing power as branded drugs.</p>
+            </div>
+            <div class="why-item">
+                <h3>More Affordable</h3>
+                <p>Generics offer big savings while keeping families healthy and secure.</p>
+            </div>
+            <div class="why-item">
+                <h3>Trusted Nationwide</h3>
+                <p>Serving millions of Filipinos through over 2,000 branches for more than two decades.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- YOUTUBE PROMO SECTION -->
+    <section class="youtube-section">
+        <div class="youtube-bg">
+            <img src="{% static 'landingpage/photo/youtubepharma.png' %}" alt="YouTube Background">
+            <div class="youtube-overlay"></div>
+        </div>
+        <div class="youtube-content">
+            <h2>Visit Our Official Youtube Channel</h2>
+            <a href="https://www.youtube.com/@TGPTheGenericsPharmacy" 
+            class="youtube-btn" 
+            target="_blank" 
+            rel="noopener noreferrer">
+            CLICK HERE
+            </a>
+        </div>
+    </section>
+
+
+    <!-- FINAL CTA / FOOTER -->
+    <section class="final-cta">
+        <h3>Join Millions of Filipinos Who Choose Smart, Affordable Healthcare.</h3>
+        <h1>GAMOT AY TAMA, ALAGANG TGP</h1>
+    </section>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="70">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'landingpage' %}">HOME</a></li>
+                <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
+                <li><a href="{% url 'contact' %}">CONTACT US</a></li>
+            </ul>
+        </nav>
+        <p>© 2025 The Generics Pharmacy. Kalusugan Para sa Lahat.</p>
+    </footer>
 </body>
 </html>

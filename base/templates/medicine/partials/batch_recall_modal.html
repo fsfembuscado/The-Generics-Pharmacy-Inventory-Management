@@ -1,0 +1,68 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr; gap: 15px; padding: 20px; }
+.modal-grid label { display: flex; flex-direction: column; font-weight: 500; }
+.modal-grid input, .modal-grid textarea { margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 20px 20px; }
+.info-box { background: #fff3e0; border-left: 4px solid #f57c00; padding: 15px; margin: 0 20px 15px; border-radius: 4px; }
+.warning-box { background: #ffebee; border-left: 4px solid #e53935; padding: 15px; margin: 0 20px 15px; border-radius: 4px; }
+</style>
+
+<form method="post" id="batch-recall-form" action="{% url 'batch-recall-modal' batch.id %}">
+    {% csrf_token %}
+    <h3 style="margin-top:0; padding: 20px 20px 10px;">Recall Batch Items</h3>
+    
+    <div class="info-box">
+        <strong>Batch Information:</strong><br>
+        Medicine: <strong>{{ medicine.name }}</strong><br>
+        Current Quantity: <strong>{{ batch.quantity }} box(es)</strong><br>
+        Total Pieces: <strong>{{ total_pieces }} piece(s)</strong><br>
+        Location: <strong>{% if batch.location == 'front' %}Store Shelf{% else %}Stock Room{% endif %}</strong>
+    </div>
+
+    <div id="recall-config" data-packs="{{ medicine.packs_per_box|default:0 }}" data-units="{{ medicine.units_per_pack|default:0 }}" data-max="{{ max_quantity }}"></div>
+
+    <div class="modal-grid">
+        <label>
+            Quantity to Recall (Boxes) *
+            <input type="number" name="recall_quantity" min="1" max="{{ max_quantity }}" required placeholder="Enter number of boxes to recall">
+            <small style="color: #666; margin-top: 4px;">Maximum: {{ max_quantity }} box(es)</small>
+        </label>
+        
+        <label>
+            Reason for Recall *
+            <textarea name="reason" rows="3" required placeholder="e.g., Damaged packaging, Defective product, Quality issue...">Damaged/Defective product</textarea>
+        </label>
+    </div>
+    
+    <div class="modal-actions">
+        <button type="submit" class="btn-edit" style="background:#e53935;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Recall Items</button>
+        <button type="button" class="block-btn" style="padding:10px 20px;border-radius:4px;cursor:pointer; background:#999;" onclick="closeModal()">Cancel</button>
+    </div>
+</form>
+
+<script>
+    // Calculate and show total pieces when quantity changes
+    (function(){
+        const input = document.querySelector('input[name="recall_quantity"]');
+        const cfg = document.getElementById('recall-config');
+        if (!input || !cfg) return;
+        const packsPerBox = parseInt(cfg.dataset.packs || '0');
+        const unitsPerPack = parseInt(cfg.dataset.units || '0');
+        const maxQ = parseInt(cfg.dataset.max || '0');
+        input.addEventListener('input', function(){
+            const qty = parseInt(this.value) || 0;
+            const totalPieces = qty * packsPerBox * unitsPerPack;
+            const small = this.nextElementSibling;
+            if (!small) return;
+            if (qty > 0) {
+                small.innerHTML = `Maximum: ${maxQ} box(es) | Selected: ${qty} box(es) = ${totalPieces} piece(s)`;
+                small.style.color = '#e53935';
+                small.style.fontWeight = 'bold';
+            } else {
+                small.innerHTML = `Maximum: ${maxQ} box(es)`;
+                small.style.color = '#666';
+                small.style.fontWeight = 'normal';
+            }
+        });
+    })();
+</script>

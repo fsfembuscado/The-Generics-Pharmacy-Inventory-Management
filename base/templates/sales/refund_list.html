@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Refunds</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+        .status-approved {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-rejected {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 30px;
+        }
+        .summary-item {
+            flex: 1;
+        }
+        .summary-item label {
+            font-size: 12px;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .summary-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-create {
+            background: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-create:hover {
+            background: #0b7dda;
+        }
+        .btn-view {
+            background: #e53935;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-view:hover {
+            background: #c62828;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 30px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        .modal-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        .close-modal {
+            font-size: 28px;
+            font-weight: bold;
+            color: #999;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            line-height: 1;
+        }
+        .close-modal:hover {
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group select,
+        .form-group input[type="text"],
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-group small {
+            display: block;
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        .btn-modal-submit {
+            background: #e53935;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-modal-submit:hover {
+            background: #c62828;
+        }
+        .btn-modal-cancel {
+            background: #999;
+            color: white;
+            padding: 10px 25px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .btn-modal-cancel:hover {
+            background: #777;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+
+    <div class="main-content">
+        <h2>Refunds</h2>
+
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div style="padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+                                {% if message.tags == 'success' %}background: #d4edda; color: #155724;{% endif %}
+                                {% if message.tags == 'error' %}background: #f8d7da; color: #721c24;{% endif %}
+                                {% if message.tags == 'info' %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="summary-card">
+            <div class="summary-item">
+                <label>Total Refunds</label>
+                <div class="value">{{ total_refunds }}</div>
+            </div>
+            <div class="summary-item">
+                <label>Pending</label>
+                <div class="value" style="color: #f57f17;">{{ pending_count }}</div>
+            </div>
+            <div class="summary-item">
+                <label>Approved</label>
+                <div class="value" style="color: #2e7d32;">{{ approved_count }}</div>
+            </div>
+        </div>
+
+        <div class="search-form">
+            <form method="get" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" name="search" placeholder="Search refunds..." value="{{ request.GET.search }}" style="flex: 1;">
+                <button type="submit">Search</button>
+            </form>
+            <button onclick="openRefundModal()" class="btn-create">+ New Refund</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 8%;">ID</th>
+                        <th style="width: 10%;">Sale #</th>
+                        <th style="width: 15%;">Date</th>
+                        <th style="width: 12%;">Amount</th>
+                        <th>Reason</th>
+                        <th style="width: 12%;">Processed By</th>
+                        <th style="width: 10%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in refunds %}
+                    <tr>
+                        <td><strong>#{{ r.refund_id }}</strong></td>
+                        <td>#{{ r.sale.sale_id }}</td>
+                        <td>
+                            {{ r.refund_date|date:"M d, Y" }}
+                            <small style="display: block; color: #666;">{{ r.refund_date|date:"g:i A" }}</small>
+                        </td>
+                        <td><strong>₱{{ r.amount_refunded|floatformat:2 }}</strong></td>
+                        <td>{{ r.get_reason_display }}</td>
+                        <td>{{ r.processed_by.username }}</td>
+                        <td>
+                            <a href="{% url 'refund-detail' r.pk %}" class="btn-view">View</a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: #999;">
+                            No refunds found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Modal -->
+<div id="refundModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>Create New Refund</h3>
+            <button class="close-modal" onclick="closeRefundModal()">&times;</button>
+        </div>
+        
+        <form method="post" action="{% url 'refund-create' %}" id="refundForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_sale">Sale *</label>
+                <select name="sale" id="id_sale" required>
+                    <option value="">-- Select a sale --</option>
+                    {% for sale in recent_sales %}
+                        <option value="{{ sale.sale_id }}">
+                            Sale #{{ sale.sale_id }} - ₱{{ sale.final_amount|floatformat:2 }} 
+                            ({{ sale.sale_date|date:"M d, Y" }})
+                        </option>
+                    {% endfor %}
+                </select>
+                <small>Select recent sale to refund</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_reason">Reason *</label>
+                <select name="reason" id="id_reason" required>
+                    <option value="">-- Select reason --</option>
+                    <option value="expired">Expired Product</option>
+                    <option value="damaged">Damaged Product</option>
+                    <option value="wrong_item">Wrong Item Sold</option>
+                    <option value="customer_request">Customer Request</option>
+                    <option value="overcharge">Overcharge/Pricing Error</option>
+                    <option value="other">Other Reason</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_reason_details">Details</label>
+                <textarea name="reason_details" id="id_reason_details" placeholder="Optional additional details..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_payment_method">Refund Method</label>
+                <select name="payment_method" id="id_payment_method">
+                    <option value="">-- Use original payment method --</option>
+                    {% for method in payment_methods %}
+                        <option value="{{ method.method_id }}">{{ method.method_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="id_reference_number">Reference Number</label>
+                <input type="text" name="reference_number" id="id_reference_number" placeholder="Optional reference number">
+            </div>
+            
+            <div class="form-group">
+                <div class="checkbox-group">
+                    <input type="checkbox" name="confirm_full_refund" id="id_confirm_full_refund" required>
+                    <label for="id_confirm_full_refund" style="margin-bottom: 0;">
+                        Confirm full refund of sale amount *
+                    </label>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button type="button" class="btn-modal-cancel" onclick="closeRefundModal()">Cancel</button>
+                <button type="submit" class="btn-modal-submit">Create Refund</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const dropdownLi = dropdown.parentElement;
+        
+        // Toggle the 'open' class on both the dropdown menu and the parent li
+        dropdown.classList.toggle('open');
+        dropdownLi.classList.toggle('open');
+    }
+    
+    function openRefundModal() {
+        document.getElementById('refundModal').style.display = 'block';
+    }
+    
+    function closeRefundModal() {
+        document.getElementById('refundModal').style.display = 'none';
+        document.getElementById('refundForm').reset();
+    }
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('refundModal');
+        if (event.target === modal) {
+            closeRefundModal();
+        }
+    }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Order #{{ order.ordering_id }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .detail-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 30px;
+        }
+        .order-header h1 {
+            margin: 0;
+            color: #333;
+        }
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .status-pending { background: #fff9c4; color: #f57f17; }
+        .status-confirmed { background: #b3e5fc; color: #01579b; }
+        .status-ready { background: #c8e6c9; color: #2e7d32; }
+        .status-completed { background: #e8f5e9; color: #1b5e20; }
+        .status-cancelled { background: #ffcdd2; color: #c62828; }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .info-item {
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .info-item label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .info-item .value {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 30px 0;
+        }
+        .items-table th, .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .items-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .stock-sufficient {
+            color: #4CAF50;
+            font-weight: 500;
+        }
+        .stock-insufficient {
+            color: #f44336;
+            font-weight: 500;
+        }
+        .actions-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+            margin-right: 10px;
+        }
+        .btn-primary { background: #2196F3; color: white; }
+        .btn-success { background: #e53935; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-secondary { background: #757575; color: white; }
+        .btn:hover { opacity: 0.9; }
+        .order-summary {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        .summary-total {
+            font-weight: bold;
+            color: #2196F3;
+            border-top: 2px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'shared/sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="detail-container">
+            <div class="order-header">
+                <h1>Order #{{ order.ordering_id }}</h1>
+                <span class="status-badge status-{{ order.status|lower }}">
+                    {{ order.get_status_display }}
+                </span>
+            </div>
+
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Customer Name</label>
+                    <div class="value">{{ order.customer_name }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Contact Number</label>
+                    <div class="value">{{ order.customer_contact|default:"Not provided" }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Order Date</label>
+                    <div class="value">{{ order.order_date|date:"M d, Y H:i" }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Expected Pickup</label>
+                    <div class="value">{{ order.expected_pickup_date|date:"M d, Y"|default:"Not specified" }}</div>
+                </div>
+                <div class="info-item">
+                    <label>Created By</label>
+                    <div class="value">{{ order.user.username|default:"System" }}</div>
+                </div>
+                {% if order.confirmed_by %}
+                <div class="info-item">
+                    <label>Confirmed By</label>
+                    <div class="value">{{ order.confirmed_by.username }} on {{ order.confirmed_date|date:"M d, Y H:i" }}</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if order.notes %}
+            <div class="info-item" style="margin-bottom: 30px;">
+                <label>Notes / Special Instructions</label>
+                <div class="value">{{ order.notes }}</div>
+            </div>
+            {% endif %}
+
+            <h2 style="margin-bottom: 15px;">Order Items</h2>
+            <table class="items-table">
+                <thead>
+                    <tr>
+                        <th>Medicine</th>
+                        <th>Quantity</th>
+                        <th>Unit Price</th>
+                        <th>Subtotal</th>
+                        <th>Stock Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item_data in availability %}
+                    <tr>
+                        <td>{{ item_data.item.medicine.name }}</td>
+                        <td>{{ item_data.item.quantity }} {{ item_data.item.unit_type }}(s) <br><small style="color: #666;">({{ item_data.item.pieces_needed }} pieces)</small></td>
+                        <td>₱{{ item_data.item.unit_price|floatformat:2 }}</td>
+                        <td>₱{{ item_data.item.line_total|floatformat:2 }}</td>
+                        <td>
+                            {% if item_data.sufficient %}
+                            <span class="stock-sufficient">✓ {{ item_data.available }} pcs available</span>
+                            {% else %}
+                            <span class="stock-insufficient">⚠ Only {{ item_data.available }} pcs available (need {{ item_data.item.pieces_needed }})</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <div class="order-summary">
+                <div class="summary-line summary-total">
+                    <span>Total Amount:</span>
+                    <span>₱{{ total_amount|floatformat:2 }}</span>
+                </div>
+            </div>
+
+            <div class="actions-section">
+                {% if order.status == 'Pending' %}
+                    <form method="post" action="{% url 'ordering-confirm' order.ordering_id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-primary">Confirm Order</button>
+                    </form>
+                    <form method="post" action="{% url 'ordering-cancel' order.ordering_id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                    </form>
+                {% elif order.status == 'Confirmed' %}
+                    <form method="post" action="{% url 'ordering-ready' order.ordering_id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success">Mark as Ready</button>
+                    </form>
+                    <form method="post" action="{% url 'ordering-cancel' order.ordering_id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                    </form>
+                {% elif order.status == 'Ready' %}
+                    <a href="{% url 'ordering-fulfill' order.ordering_id %}" class="btn btn-success">Process Payment & Fulfill Order</a>
+                    <form method="post" action="{% url 'ordering-cancel' order.ordering_id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure you want to cancel this order?')">Cancel Order</button>
+                    </form>
+                {% elif order.status == 'Completed' %}
+                    {% if order.sale %}
+                    <a href="{% url 'view_invoice' order.sale.sale_id %}" class="btn btn-primary">View Invoice</a>
+                    {% endif %}
+                {% endif %}
+                
+                <a href="{% url 'ordering-list' %}" class="btn btn-secondary">Back to Orders</a>
+            </div>
+
+            {% if messages %}
+            <div style="margin-top: 20px;">
+                {% for message in messages %}
+                <div style="padding: 10px; background: {% if message.tags == 'success' %}#d4edda{% elif message.tags == 'error' %}#f8d7da{% else %}#d1ecf1{% endif %}; border-radius: 4px; margin-bottom: 10px;">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const arrow = dropdown.previousElementSibling.querySelector(".dropdown-arrow");
+            const isOpen = dropdown.style.display === "block";
+            
+            document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
+            document.querySelectorAll(".dropdown-arrow").forEach(a => a.textContent = "▼");
+            
+            if (!isOpen) {
+                dropdown.style.display = "block";
+                arrow.textContent = "▲";
+            }
+        }
+    </script>
+</body>
+</html>

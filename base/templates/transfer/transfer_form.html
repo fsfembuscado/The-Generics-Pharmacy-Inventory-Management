@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Transfer</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'medicine/dispensestyles.css' %}">
+</head>
+<body>
+    <div class="container">
+        {% include 'shared/sidebar.html' %}
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2>Stock Transfer (Stock-Out)</h2>
+                <p>Select one or more products to transfer out of the store. FIFO will be used to deduct from batches.</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate id="transfer-form">
+                {% csrf_token %}
+                
+                <!-- Branch Selection -->
+                <div class="table-container" style="margin-bottom: 20px;">
+                    <div class="form-group" style="padding: 20px;">
+                        <label for="transfer_branch" style="display: block; margin-bottom: 10px; font-weight: 600;">Transfer to Branch:</label>
+                        <select name="transfer_branch" id="transfer_branch" required style="width: 100%; max-width: 400px; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                            <option value="">-- Select Branch --</option>
+                            <option value="Toril">Toril</option>
+                            <option value="Buhangin">Buhangin</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Transfer Items Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5>Transfer Items</h5>
+                        <button type="button" class="btn-add" id="add-row">
+                            + Add Medicine
+                        </button>
+                    </div>
+                    
+                    {{ formset.management_form }}
+                    <table>
+                        <thead style="color: #fff;">
+                            <tr>
+                                <th style="color: #fff;">Medicine</th>
+                                <th style="color: #fff;">Unit Type</th>
+                                <th style="color: #fff;">Quantity</th>
+                                <th style="width: 120px; color: #fff;">Available</th>
+                                <th style="width: 80px; color: #fff;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="formset-body">
+                            {% for form in formset %}
+                            <tr class="formset-row" data-form-index="{{ forloop.counter0 }}">
+                                <td>{{ form.medicine }}</td>
+                                <td>{{ form.unit_type }}</td>
+                                <td>{{ form.quantity }}</td>
+                                <td class="available-stock">-</td>
+                                <td>
+                                    <button type="button" class="btn-remove" onclick="removeRow(this)">Remove</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn-submit">Transfer Selected Items</button>
+                    <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+// Stock information from server
+const stockInfo = {{ stock_info|safe }};
+
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    const dropdownLi = dropdown.parentElement;
+    
+    // Toggle the 'open' class on both the dropdown menu and the parent li
+    dropdown.classList.toggle('open');
+    dropdownLi.classList.toggle('open');
+}
+
+// Update available stock display and set max quantity
+function updateStockInfo(row) {
+    const medicineSelect = row.querySelector('select[name*="medicine"]');
+    const unitSelect = row.querySelector('select[name*="unit_type"]');
+    const quantityInput = row.querySelector('input[name*="quantity"]');
+    const availableCell = row.querySelector('.available-stock');
+    
+    if (!medicineSelect || !unitSelect || !quantityInput || !availableCell) return;
+    
+    const medicineId = medicineSelect.value;
+    const unitType = unitSelect.value;
+    
+    if (medicineId && stockInfo[medicineId]) {
+        const stock = stockInfo[medicineId];
+        let maxQty = 0;
+        let displayText = '-';
+        
+        if (unitType === 'piece') {
+            maxQty = stock.pieces;
+            displayText = `${stock.pieces} pcs`;
+        } else if (unitType === 'pack') {
+            maxQty = stock.packs;
+            displayText = `${stock.packs} packs`;
+        } else if (unitType === 'box') {
+            maxQty = stock.boxes;
+            displayText = `${stock.boxes} boxes`;
+        }
+        
+        quantityInput.setAttribute('max', maxQty);
+        availableCell.textContent = displayText;
+        
+        // Validate current value against max
+        if (parseInt(quantityInput.value) > maxQty) {
+            quantityInput.value = maxQty;
+        }
+    } else {
+        quantityInput.removeAttribute('max');
+        availableCell.textContent = '-';
+    }
+}
+
+// Add event listeners to all existing rows
+document.addEventListener('DOMContentLoaded', function() {
+    const tbody = document.getElementById('formset-body');
+    const rows = tbody.querySelectorAll('.formset-row');
+    
+    // Remove all rows except the first one
+    rows.forEach((row, index) => {
+        if (index > 0) {
+            row.remove();
+        } else {
+            // Add listeners to first row
+            const medicineSelect = row.querySelector('select[name*="medicine"]');
+            const unitSelect = row.querySelector('select[name*="unit_type"]');
+            
+            if (medicineSelect) {
+                medicineSelect.addEventListener('change', () => updateStockInfo(row));
+            }
+            if (unitSelect) {
+                unitSelect.addEventListener('change', () => updateStockInfo(row));
+            }
+            
+            // Initial update
+            updateStockInfo(row);
+        }
+    });
+    
+    // Update form count to 1
+    formIndex = 1;
+    document.getElementById('id_form-TOTAL_FORMS').value = 1;
+});
+
+// Add new row functionality
+let formIndex = {{ formset.total_form_count }};
+
+document.getElementById('add-row').addEventListener('click', function() {
+    const tbody = document.getElementById('formset-body');
+    const newRow = document.createElement('tr');
+    newRow.className = 'formset-row';
+    newRow.dataset.formIndex = formIndex;
+    
+    // Get the first row to clone select options
+    const firstRow = tbody.querySelector('.formset-row');
+    const firstMedicineSelect = firstRow?.querySelector('select[name*="medicine"]');
+    const firstUnitSelect = firstRow?.querySelector('select[name*="unit_type"]');
+    
+    let medicineOptions = '';
+    let unitOptions = '';
+    
+    if (firstMedicineSelect) {
+        Array.from(firstMedicineSelect.options).forEach(opt => {
+            medicineOptions += `<option value="${opt.value}">${opt.textContent}</option>`;
+        });
+    }
+    
+    if (firstUnitSelect) {
+        Array.from(firstUnitSelect.options).forEach(opt => {
+            unitOptions += `<option value="${opt.value}">${opt.textContent}</option>`;
+        });
+    }
+    
+    newRow.innerHTML = `
+        <td>
+            <select name="form-${formIndex}-medicine" id="id_form-${formIndex}-medicine" required>
+                ${medicineOptions}
+            </select>
+        </td>
+        <td>
+            <select name="form-${formIndex}-unit_type" id="id_form-${formIndex}-unit_type">
+                ${unitOptions}
+            </select>
+        </td>
+        <td>
+            <input type="number" name="form-${formIndex}-quantity" id="id_form-${formIndex}-quantity" 
+                   step="1" min="1" required>
+        </td>
+        <td class="available-stock">-</td>
+        <td>
+            <button type="button" class="btn-remove" onclick="removeRow(this)">Remove</button>
+        </td>
+    `;
+    
+    tbody.appendChild(newRow);
+    
+    // Add event listeners to the new row
+    const medicineSelect = newRow.querySelector('select[name*="medicine"]');
+    const unitSelect = newRow.querySelector('select[name*="unit_type"]');
+    
+    if (medicineSelect) {
+        medicineSelect.addEventListener('change', () => updateStockInfo(newRow));
+    }
+    if (unitSelect) {
+        unitSelect.addEventListener('change', () => updateStockInfo(newRow));
+    }
+    
+    // Initial update
+    updateStockInfo(newRow);
+    
+    formIndex++;
+    
+    // Update management form
+    document.getElementById('id_form-TOTAL_FORMS').value = formIndex;
+});
+
+function removeRow(button) {
+    const tbody = document.getElementById('formset-body');
+    const rows = tbody.querySelectorAll('.formset-row');
+    
+    // Keep at least one row
+    if (rows.length > 1) {
+        button.closest('tr').remove();
+        
+        // Update form count
+        const currentTotal = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
+        document.getElementById('id_form-TOTAL_FORMS').value = currentTotal - 1;
+    } else {
+        alert('You must have at least one item to transfer.');
+    }
+}
+</script>
+</body>
+</html>

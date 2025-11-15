@@ -1,0 +1,54 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+.modal-grid label { display: flex; flex-direction: column; font-weight: 500; }
+.modal-grid label.full-width { grid-column: 1 / -1; }
+.modal-grid input, .modal-grid select { margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 20px 20px; }
+</style>
+
+<form method="post" id="batch-create-form" action="{% url 'batch-add-modal' %}">
+    {% csrf_token %}
+    <h3 style="margin-top:0; padding: 20px 20px 10px;">Add New Batch</h3>
+    <p style="padding: 0 20px; color: #666; font-size: 14px; margin: 0;">Select a received purchase order, then choose the medicine from that order.</p>
+    <div class="modal-grid">
+        <label class="full-width">Purchase Order {{ form.purchase_order }}</label>
+        <label class="full-width">Medicine from Order {{ form.po_line }}</label>
+        <label>Quantity Received (Boxes) {{ form.quantity }}</label>
+        <label>Damaged Boxes <input type="number" name="damaged_boxes" min="0" value="0" style="margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;"></label>
+        <label class="full-width">Date Received {{ form.date_received }}</label>
+    </div>
+    <div class="modal-actions">
+        <button type="submit" class="btn-edit" style="background:#4CAF50;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Add Batch</button>
+        <button type="button" class="block-btn" style="padding:10px 20px;border-radius:4px;cursor:pointer;" onclick="closeModal()">Cancel</button>
+    </div>
+</form>
+
+<script>
+// Populate medicine dropdown based on selected PO
+document.querySelector('[name="purchase_order"]').addEventListener('change', function() {
+    const poId = this.value;
+    const medicineSelect = document.querySelector('[name="po_line"]');
+    
+    if (!poId) {
+        medicineSelect.innerHTML = '<option value="">-- Select Medicine --</option>';
+        return;
+    }
+    
+    // Fetch medicines for this PO
+    fetch(`/purchase-order/${poId}/lines/`)
+        .then(r => r.json())
+        .then(data => {
+            medicineSelect.innerHTML = '<option value="">-- Select Medicine --</option>';
+            data.lines.forEach(line => {
+                const option = document.createElement('option');
+                option.value = line.id;
+                option.textContent = `${line.medicine_name} (${line.quantity} boxes)`;
+                medicineSelect.appendChild(option);
+            });
+        })
+        .catch(err => {
+            console.error('Error loading medicines:', err);
+            medicineSelect.innerHTML = '<option value="">Error loading medicines</option>';
+        });
+});
+</script>

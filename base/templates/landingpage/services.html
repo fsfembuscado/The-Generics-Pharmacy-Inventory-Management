@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TGP Pharmacy</title>
-    
+    <title>TGP Pharmacy | Services</title>
+
     {% load static %}
+    <link rel="stylesheet" href="{% static 'landingpage/navigationbarlanding.css' %}">
     <link rel="stylesheet" href="{% static 'landingpage/servicesstyles.css' %}">
 </head>
 <body>
@@ -16,16 +17,73 @@
         <nav>
             <ul>    
                 <li><a href="{% url 'landingpage' %}">HOME</a></li>
-                <li><a href="{% url 'services' %}" class="active">SERVICES</a></li>
                 <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}" class="active">SERVICES</a></li>
                 <li><a href="{% url 'contact' %}">CONTACT US</a></li>
             </ul>
         </nav>
         <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
     </header>
 
-    <section class="body">
-        <h1>SERVICES</h1>
+    <section class="services-section">
+        <h1>Our Services</h1>
+        <p>
+            Affordable Healthcare for Every Filipino<br><br>
+            At The Generics Pharmacy (TGP), we believe that quality healthcare should be accessible to all. 
+            Our commitment is to make safe, effective, and affordable generic medicines available to every 
+            Filipino, wherever they are in the country.
+        </p>
+        <p>
+            With over 2,000 branches nationwide, TGP continues to serve as a trusted partner in health and 
+            wellness, providing a wide range of services that bring care closer to communities.
+        </p>
     </section>
+
+    <section class="offer-section">
+        <h2>What We Offer</h2>
+        <ul>
+            <li>💊 <strong>Affordable Generic Medicines</strong><br>
+                We provide a wide selection of FDA-approved generic medicines, ensuring that every Filipino 
+                has access to high-quality treatments without the high price.
+            </li>
+            <li>✓ <strong>Over-the-Counter (OTC) Products</strong><br>
+                From vitamins and supplements to basic first-aid needs, our OTC products support your family’s 
+                daily health and well-being.
+            </li>
+            <li>🩺 <strong>Pharmacy Assistance and Consultation</strong><br>
+                Our friendly and knowledgeable pharmacists are always ready to guide customers in choosing 
+                the right medicine, giving proper dosage advice, and ensuring safe usage.
+            </li>
+            <li>❣️ <strong>Community Health Support</strong><br>
+                TGP partners with local communities and organizations to promote health awareness, medical 
+                missions, and affordable healthcare programs that reach underserved areas.
+            </li>
+            <li>🌿 <strong>Health and Wellness Products</strong><br>
+                Beyond medicines, we also offer wellness essentials, including herbal and personal care 
+                products, for a more holistic approach to good health.
+            </li>
+        </ul>
+    </section>
+
+    <section class="commitment-section">
+        <h2>Our Commitment</h2>
+        <p>We strive to live by our promise:</p>
+        <h3>“Gamot ay Tama, Alagang TGP.”</h3>
+    </section>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="70">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'landingpage' %}">HOME</a></li>
+                <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
+                <li><a href="{% url 'contact' %}">CONTACT US</a></li>
+            </ul>
+        </nav>
+        <p>© 2025 The Generics Pharmacy. Kalusugan Para sa Lahat.</p>
+    </footer>
 </body>
 </html>

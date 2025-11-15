@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Movements</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .search-form {
+            margin-bottom: 20px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .search-form input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            flex: 1;
+            max-width: 300px;
+            font-size: 14px;
+        }
+        .search-form button {
+            padding: 8px 20px;
+            border: none;
+            background: #e53935;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .search-form button:hover {
+            background: #c62828;
+        }
+        .reason-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .reason-sale {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .reason-expired {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .reason-damaged {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+        .reason-returned {
+            background: #b3e5fc;
+            color: #01579b;
+        }
+        .reason-transfer {
+            background: #e1bee7;
+            color: #6a1b9a;
+        }
+        .reason-other {
+            background: #e0e0e0;
+            color: #424242;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+
+    <div class="main-content">
+        <h2>Stock Movements</h2>
+
+        <div class="search-form">
+            <form method="get" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" name="search" placeholder="Search medicine..." value="{{ request.GET.search }}">
+                <button type="submit">Search</button>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Date</th>
+                        <th>Medicine</th>
+                        <th style="width: 8%;">Batch</th>
+                        <th style="width: 8%;">Quantity</th>
+                        <th style="width: 10%;">From</th>
+                        <th style="width: 10%;">To</th>
+                        <th style="width: 10%;">Reason</th>
+                        <th style="width: 10%;">User</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for move in movements %}
+                    <tr>
+                        <td>
+                            {{ move.movement_date|date:"M d, Y" }}
+                            <small style="display: block; color: #666;">{{ move.movement_date|date:"g:i A" }}</small>
+                        </td>
+                        <td><strong>{{ move.medicine.name }}</strong></td>
+                        <td>{{ move.batch.id }}</td>
+                        <td><strong>{{ move.quantity }}</strong></td>
+                        <td>{{ move.from_location|default:"—" }}</td>
+                        <td>{{ move.to_location|default:"—" }}</td>
+                        <td>
+                            {% if move.reason == "sale" %}
+                                <span class="reason-badge reason-sale">Sale</span>
+                            {% elif move.reason == "expired" %}
+                                <span class="reason-badge reason-expired">Expired</span>
+                            {% elif move.reason == "damaged" %}
+                                <span class="reason-badge reason-damaged">Damaged</span>
+                            {% elif move.reason == "returned" %}
+                                <span class="reason-badge reason-returned">Returned</span>
+                            {% elif move.reason == "transfer" %}
+                                <span class="reason-badge reason-transfer">Transfer</span>
+                            {% else %}
+                                <span class="reason-badge reason-other">{{ move.reason }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ move.user.username|default:"System" }}</td>
+                        <td>{{ move.remarks|default:"—" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 40px; color: #999;">No stock movements recorded.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const dropdownLi = dropdown.parentElement;
+        
+        // Toggle the 'open' class on both the dropdown menu and the parent li
+        dropdown.classList.toggle('open');
+        dropdownLi.classList.toggle('open');
+    }
+</script>
+</body>
+</html>

@@ -1,77 +1,140 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:Arial, Helvetica, sans-serif;
+body {
+    background-color: #f2f2f2;
+    color: #000;
+    font-family: Arial, Helvetica, sans-serif;
+    margin: 0;
 }
 
-body{
-    background-color:#f2f2f2;
-    color:#000;
+.about-container {
+    padding: 60px 80px;
 }
 
-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding:20px 60px;
+.about-title {
+    text-align: center;
+    color: red;
+    font-size: 60px;
+    font-weight: bold;
+    margin-top: 100px;
+    margin-bottom: 50px;
 }
 
-.logo img{
-    width:100px;
-    height:auto;
+.profile-section {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 50px;
+    flex-wrap: wrap;
 }
 
-nav ul{
-    list-style:none;
-    display:flex;
-    gap:40px;
+.profile-image img {
+    width: 400px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
 }
 
-nav ul li a{
-    text-decoration:none;
-    color:black;
-    font-size:14px;
-    transition:color 0.3s;
+.profile-text {
+    max-width: 600px;
 }
 
-nav ul li a:hover{
-    color:red;
+.profile-text h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+    margin-bottom: 15px;
 }
 
-.login-btn{
-    border:2px solid red;
-    padding:6px 18px;
-    border-radius:10px;
-    text-decoration:none;
-    color:black;
-    font-size:14px;
-    transition:all 0.3s;
+.profile-text p {
+    font-size: 16px;
+    color: #333;
+    margin-bottom: 15px;
+    line-height: 1.6;
 }
 
-.login-btn:hover{
-    background-color:red;
-    color:white;
+/* Mission & Vision */
+.mission-vision {
+    display: flex;
+    justify-content: space-between;
+    gap: 60px;
+    margin-top: 80px;
+    flex-wrap: wrap;
 }
 
-.body{
-    margin-top:150px;
-    text-align:left;
-    padding-left:80px;
+.mission, .vision {
+    flex: 1;
+    min-width: 300px;
 }
 
-.body h1{
-    font-size:60px;
-    font-weight:bold;
-    color:red;
+.mission h2, .vision h2 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
 }
 
-.body p{
-    font-size:26px;
-    margin-top:10px;
-    color:#333;
+.mission h3, .vision h3 {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 15px;
 }
 
-nav ul li a.active {
-    border-bottom: 2px solid red;
+.mission p, .vision p {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #333;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    background-color: #f2f2f2;
+    padding: 40px 20px;
+    border-top: 1px solid #ccc;
+}
+
+footer .footer-logo img {
+    margin-bottom: 10px;
+}
+
+footer nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    padding: 10px 0;
+}
+
+footer nav ul li a {
+    text-decoration: none;
+    color: #000;
+    font-size: 14px;
+    transition: 0.3s;
+}
+
+footer nav ul li a:hover {
+    color: #d40000;
+}
+
+footer p {
+    font-size: 12px;
+    color: #555;
+    margin-top: 10px;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .about-container {
+        padding: 40px 20px;
+    }
+
+    .about-title {
+        font-size: 42px;
+    }
+
+    .profile-section {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .mission-vision {
+        flex-direction: column;
+    }
 }

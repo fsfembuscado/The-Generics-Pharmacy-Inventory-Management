@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Orders</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .status-badge {
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .status-pending {
+            background: #fff9c4;
+            color: #f57f17;
+        }
+        .status-confirmed {
+            background: #b3e5fc;
+            color: #01579b;
+        }
+        .status-ready {
+            background: #c8e6c9;
+            color: #2e7d32;
+        }
+        .status-completed {
+            background: #e8f5e9;
+            color: #1b5e20;
+        }
+        .status-cancelled {
+            background: #ffcdd2;
+            color: #c62828;
+        }
+        .summary-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 30px;
+        }
+        .summary-item {
+            flex: 1;
+        }
+        .summary-item label {
+            font-size: 12px;
+            color: #666;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .summary-item .value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+        .btn-create {
+            background: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-create:hover {
+            background: #0b7dda;
+        }
+        .btn-view {
+            background: #e53935;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-view:hover {
+            background: #c62828;
+        }
+        .filter-bar {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .filter-bar select, .filter-bar input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .filter-bar button {
+            padding: 8px 15px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .orders-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .orders-table th, .orders-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .orders-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+        .orders-table tr:hover {
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    {% include 'shared/sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="header">
+            <h1>Customer Orders</h1>
+            <a href="{% url 'ordering-create' %}" class="btn-create">+ New Order</a>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-card">
+            <div class="summary-item">
+                <label>Pending Orders</label>
+                <div class="value">{{ pending_count }}</div>
+            </div>
+            <div class="summary-item">
+                <label>Confirmed Orders</label>
+                <div class="value">{{ confirmed_count }}</div>
+            </div>
+            <div class="summary-item">
+                <label>Ready for Pickup</label>
+                <div class="value">{{ ready_count }}</div>
+            </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <form method="get" class="filter-bar">
+            <label>Status:</label>
+            <select name="status" onchange="this.form.submit()">
+                <option value="All" {% if status_filter == 'All' %}selected{% endif %}>All</option>
+                {% for value, label in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+            
+            <label>Search:</label>
+            <input type="text" name="search" placeholder="Customer name or Order ID" value="{{ search_query }}">
+            <button type="submit">Search</button>
+        </form>
+
+        <!-- Orders Table -->
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Contact</th>
+                    <th>Order Date</th>
+                    <th>Pickup Date</th>
+                    <th>Status</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if orders %}
+                    {% for order in orders %}
+                    <tr>
+                        <td>#{{ order.ordering_id }}</td>
+                        <td>{{ order.customer_name }}</td>
+                        <td>{{ order.customer_contact|default:"-" }}</td>
+                        <td>{{ order.order_date|date:"M d, Y H:i" }}</td>
+                        <td>{{ order.expected_pickup_date|date:"M d, Y"|default:"-" }}</td>
+                        <td>
+                            <span class="status-badge status-{{ order.status|lower }}">
+                                {{ order.get_status_display }}
+                            </span>
+                        </td>
+                        <td>₱{{ order.get_total_amount|floatformat:2 }}</td>
+                        <td>
+                            <a href="{% url 'ordering-detail' order.ordering_id %}" class="btn-view">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 30px; color: #999;">
+                            No orders found.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if is_paginated %}
+        <div style="margin-top: 20px; text-align: center;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1&status={{ status_filter }}&search={{ search_query }}" style="margin: 0 5px;">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}&status={{ status_filter }}&search={{ search_query }}" style="margin: 0 5px;">Previous</a>
+            {% endif %}
+            
+            <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&status={{ status_filter }}&search={{ search_query }}" style="margin: 0 5px;">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&status={{ status_filter }}&search={{ search_query }}" style="margin: 0 5px;">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const arrow = dropdown.previousElementSibling.querySelector(".dropdown-arrow");
+            const isOpen = dropdown.style.display === "block";
+            
+            // Close all dropdowns
+            document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
+            document.querySelectorAll(".dropdown-arrow").forEach(a => a.textContent = "▼");
+            
+            // Toggle clicked dropdown
+            if (!isOpen) {
+                dropdown.style.display = "block";
+                arrow.textContent = "▲";
+            }
+        }
+    </script>
+</body>
+</html>

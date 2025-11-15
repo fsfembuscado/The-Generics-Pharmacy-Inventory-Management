@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>New Customer Order</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .form-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 1200px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .form-section {
+            margin-bottom: 30px;
+        }
+        .form-section h2 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2196F3;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .items-section {
+            margin-top: 30px;
+        }
+        .item-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: end;
+        }
+        .item-row input, .item-row select {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .btn-add-item {
+            background: #e53935;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-remove-item {
+            background: #f44336;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-submit {
+            background: #2196F3;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        .btn-cancel {
+            background: #757575;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .order-summary {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        .order-summary h3 {
+            margin-bottom: 10px;
+        }
+        .summary-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .summary-total {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2196F3;
+            padding-top: 10px;
+            border-top: 2px solid #ddd;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    {% include 'shared/sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="header">
+            <h1>New Customer Order</h1>
+        </div>
+
+        <form method="post" id="orderForm" class="form-container">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h2>Customer Information</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_customer_name">Customer Name *</label>
+                        {{ form.customer_name }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_customer_contact">Contact Number</label>
+                        {{ form.customer_contact }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="id_expected_pickup_date">Expected Pickup Date</label>
+                        {{ form.expected_pickup_date }}
+                    </div>
+                    <div class="form-group">
+                        <label for="id_notes">Notes / Special Instructions</label>
+                        {{ form.notes }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="items-section">
+                <h2>Order Items</h2>
+                <div id="itemsContainer">
+                    <div class="item-row">
+                        <div>
+                            <label>Medicine *</label>
+                            <select name="medicine[]" class="medicine-select" required>
+                                <option value="">Select Medicine</option>
+                                {% for med in medicines %}
+                                <option value="{{ med.id }}" data-price="{{ med.price }}" data-pieces="{{ med.available_pieces }}" data-pack="{{ med.units_per_pack }}" data-box="{{ med.packs_per_box }}">
+                                    {{ med.name }} - ₱{{ med.price }} ({{ med.available_pieces }} pcs available)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label>Quantity *</label>
+                            <input type="number" name="quantity[]" min="1" class="quantity-input" required>
+                        </div>
+                        <div>
+                            <label>Unit *</label>
+                            <select name="unit_type[]" class="unit-select" required>
+                                <option value="piece">Piece</option>
+                                <option value="pack">Pack</option>
+                                <option value="box">Box</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Subtotal</label>
+                            <input type="text" class="subtotal-display" readonly style="background: #f5f5f5;">
+                        </div>
+                        <div>
+                            <label>&nbsp;</label>
+                            <button type="button" class="btn-remove-item" onclick="removeItem(this)" style="display:none;">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-add-item" onclick="addItem()">+ Add Item</button>
+            </div>
+
+            <div class="order-summary">
+                <h3>Order Summary</h3>
+                <div class="summary-line">
+                    <span>Total Items:</span>
+                    <span id="totalItems">0</span>
+                </div>
+                <div class="summary-line summary-total">
+                    <span>Total Amount:</span>
+                    <span id="totalAmount">₱0.00</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button type="submit" class="btn-submit">Create Order</button>
+                <a href="{% url 'ordering-list' %}" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const medicinesData = {{ medicines|safe }};
+        
+        function calculateItemTotal(row) {
+            const medicineSelect = row.querySelector('.medicine-select');
+            const quantityInput = row.querySelector('.quantity-input');
+            const unitSelect = row.querySelector('.unit-select');
+            const subtotalDisplay = row.querySelector('.subtotal-display');
+            
+            const selectedOption = medicineSelect.options[medicineSelect.selectedIndex];
+            if (!selectedOption || !selectedOption.value) {
+                subtotalDisplay.value = '₱0.00';
+                return 0;
+            }
+            
+            const price = parseFloat(selectedOption.dataset.price || 0);
+            const quantity = parseInt(quantityInput.value || 0);
+            const unitType = unitSelect.value;
+            const unitsPerPack = parseInt(selectedOption.dataset.pack || 1);
+            const packsPerBox = parseInt(selectedOption.dataset.box || 1);
+            
+            let pieces = quantity;
+            if (unitType === 'pack') {
+                pieces = quantity * unitsPerPack;
+            } else if (unitType === 'box') {
+                pieces = quantity * packsPerBox * unitsPerPack;
+            }
+            
+            const total = pieces * price;
+            subtotalDisplay.value = '₱' + total.toFixed(2);
+            return total;
+        }
+        
+        function updateOrderSummary() {
+            const rows = document.querySelectorAll('#itemsContainer .item-row');
+            let totalAmount = 0;
+            let totalItems = 0;
+            
+            rows.forEach(row => {
+                const medicineSelect = row.querySelector('.medicine-select');
+                if (medicineSelect.value) {
+                    totalItems++;
+                    totalAmount += calculateItemTotal(row);
+                }
+            });
+            
+            document.getElementById('totalItems').textContent = totalItems;
+            document.getElementById('totalAmount').textContent = '₱' + totalAmount.toFixed(2);
+        }
+        
+        function addItem() {
+            const container = document.getElementById('itemsContainer');
+            const firstRow = container.querySelector('.item-row');
+            const newRow = firstRow.cloneNode(true);
+            
+            // Reset values
+            newRow.querySelectorAll('input, select').forEach(input => {
+                if (input.classList.contains('medicine-select')) {
+                    input.selectedIndex = 0;
+                } else if (!input.classList.contains('subtotal-display')) {
+                    input.value = '';
+                }
+            });
+            newRow.querySelector('.subtotal-display').value = '₱0.00';
+            newRow.querySelector('.btn-remove-item').style.display = 'inline-block';
+            
+            // Add event listeners
+            newRow.querySelectorAll('.medicine-select, .quantity-input, .unit-select').forEach(input => {
+                input.addEventListener('change', updateOrderSummary);
+            });
+            
+            container.appendChild(newRow);
+            updateRemoveButtons();
+        }
+        
+        function removeItem(button) {
+            const row = button.closest('.item-row');
+            row.remove();
+            updateOrderSummary();
+            updateRemoveButtons();
+        }
+        
+        function updateRemoveButtons() {
+            const rows = document.querySelectorAll('#itemsContainer .item-row');
+            rows.forEach((row, index) => {
+                const removeBtn = row.querySelector('.btn-remove-item');
+                if (rows.length > 1) {
+                    removeBtn.style.display = 'inline-block';
+                } else {
+                    removeBtn.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize event listeners
+        document.querySelectorAll('.medicine-select, .quantity-input, .unit-select').forEach(input => {
+            input.addEventListener('change', updateOrderSummary);
+        });
+        
+        // Form validation
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            const rows = document.querySelectorAll('#itemsContainer .item-row');
+            let hasItems = false;
+            
+            rows.forEach(row => {
+                const medicineSelect = row.querySelector('.medicine-select');
+                if (medicineSelect.value) {
+                    hasItems = true;
+                }
+            });
+            
+            if (!hasItems) {
+                e.preventDefault();
+                alert('Please add at least one item to the order.');
+                return false;
+            }
+        });
+        
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const arrow = dropdown.previousElementSibling.querySelector(".dropdown-arrow");
+            const isOpen = dropdown.style.display === "block";
+            
+            document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
+            document.querySelectorAll(".dropdown-arrow").forEach(a => a.textContent = "▼");
+            
+            if (!isOpen) {
+                dropdown.style.display = "block";
+                arrow.textContent = "▲";
+            }
+        }
+    </script>
+</body>
+</html>

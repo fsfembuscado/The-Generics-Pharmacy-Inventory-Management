@@ -1,0 +1,42 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Process Refund</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div class="mb-3">
+      <label>{{ form.sale.label }}</label>
+      {{ form.sale }}
+      <small class="text-muted">Select a recent sale.</small>
+      {{ form.sale.errors }}
+    </div>
+    <div class="mb-3">
+      <label>{{ form.reason.label }}</label>
+      {{ form.reason }}
+      {{ form.reason.errors }}
+    </div>
+    <div class="mb-3">
+      <label>{{ form.reason_details.label }}</label>
+      {{ form.reason_details }}
+      {{ form.reason_details.errors }}
+    </div>
+    <div class="mb-3">
+      <label>{{ form.payment_method.label }}</label>
+      {{ form.payment_method }}
+      {{ form.payment_method.errors }}
+    </div>
+    <div class="mb-3">
+      <label>{{ form.reference_number.label }}</label>
+      {{ form.reference_number }}
+      {{ form.reference_number.errors }}
+    </div>
+    <div class="form-check mb-3">
+      {{ form.confirm_full_refund }} <label class="form-check-label" for="{{ form.confirm_full_refund.id_for_label }}">{{ form.confirm_full_refund.label }} (Full amount will be refunded)</label>
+      {{ form.confirm_full_refund.errors }}
+    </div>
+    <button class="btn btn-danger" type="submit">Process Refund</button>
+    <a href="{% url 'refund-list' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

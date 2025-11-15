@@ -6,6 +6,17 @@ body{
     color:#333;
 }
 
+/* Global table header styling - Red theme */
+thead{
+    background-color:#e53935!important;
+    color:#fff!important;
+}
+
+thead th{
+    color:#fff!important;
+    background-color:#e53935!important;
+}
+
 .container{
     display:flex;
     min-height:100vh;
@@ -154,4 +165,37 @@ table tr:hover td{
 
 s{
     color:#888;
+}
+
+/* ADDING BUTTON COLLOR FOR BATCH LIST */
+.btn-batch{
+    display:inline-block;
+    background-color:#e53935; /* red, same as Add Medicine */
+    color:#fff;
+    padding:8px 14px;
+    margin:6px 6px 12px 0;
+    border-radius:6px;
+    font-size:14px;
+    text-decoration:none;
+}
+
+.btn-batch:hover{
+    background-color:#c62828;
+    transform:translateY(-1px);
+}
+
+.btn-dispense{
+    display:inline-block;
+    background-color:#43a047; /* green */
+    color:#fff;
+    padding:8px 14px;
+    margin:6px 6px 12px 0;
+    border-radius:6px;
+    font-size:14px;
+    text-decoration:none;
+}
+
+.btn-dispense:hover{
+    background-color:#2e7d32;
+    transform:translateY(-1px);
 }

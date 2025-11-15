@@ -1,0 +1,140 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+.modal-grid label { display: flex; flex-direction: column; font-weight: 500; }
+.modal-grid label.full-width { grid-column: 1 / -1; }
+.modal-grid input, .modal-grid select, .modal-grid textarea { margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 20px 20px; }
+.items-table { width: 100%; border-collapse: collapse; margin: 20px; }
+.items-table th, .items-table td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+.items-table th { background: #f44336; color: white; font-weight: 600; }
+.btn-remove { background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+</style>
+
+<form method="post" id="po-form" action="{% url 'purchase-order-add-modal' %}">
+    {% csrf_token %}
+    <h3 style="margin-top:0; padding: 20px 20px 5px;">Create Purchase Order</h3>
+    <p style="padding: 0 20px 10px; color: #666; margin: 0; font-size: 14px;">Add all medicines you want to order in this single purchase order. Click "+ Add Another Medicine" to add more items.</p>
+    
+    <div style="padding: 0 20px;">
+        <table class="items-table" id="items-table">
+            <thead>
+                <tr>
+                    <th style="width: 70%;">Medicine</th>
+                    <th style="width: 20%;">Quantity (Boxes)</th>
+                    <th style="width: 10%;"></th>
+                </tr>
+            </thead>
+            <tbody id="items-body">
+                <tr class="item-row">
+                    <td>
+                        <select name="medicine[]" required style="width: 100%; padding: 5px;">
+                            <option value="">-- Select Medicine --</option>
+                            {% for medicine in medicines %}
+                            <option value="{{ medicine.id }}">{{ medicine.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><input type="number" name="quantity[]" required min="1" value="1" style="width: 100%; padding: 5px;"></td>
+                    <td><button type="button" class="btn-remove" onclick="removeRow(this)" style="display: none;">×</button></td>
+                </tr>
+            </tbody>
+        </table>
+        <input type="hidden" name="unit[]" value="box">
+        <button type="button" onclick="addRow()" style="margin-left: 20px; padding: 10px 20px; background: #2196F3; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 500;">+ Add Another Medicine</button>
+    </div>
+    
+    <div class="modal-grid">
+        <label class="full-width">Notes <textarea name="notes" rows="2" style="width: 100%;"></textarea></label>
+    </div>
+    
+    <div class="modal-actions">
+        <button type="submit" class="btn-edit" style="background:#4CAF50;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Create Order</button>
+        <button type="button" class="block-btn" style="padding:10px 20px;border-radius:4px;cursor:pointer;" onclick="closeModal()">Cancel</button>
+    </div>
+</form>
+
+<script>
+function addRow() {
+    const tbody = document.getElementById('items-body');
+    const newRow = tbody.rows[0].cloneNode(true);
+    
+    // Clear values
+    newRow.querySelector('input[type="number"]').value = '1';
+    newRow.querySelector('select').selectedIndex = 0;
+    
+    // Show remove button
+    newRow.querySelector('.btn-remove').style.display = 'inline-block';
+    
+    tbody.appendChild(newRow);
+    updateRemoveButtons();
+}
+
+function removeRow(btn) {
+    btn.closest('tr').remove();
+    updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+    const rows = document.querySelectorAll('.item-row');
+    rows.forEach((row, index) => {
+        const removeBtn = row.querySelector('.btn-remove');
+        removeBtn.style.display = rows.length > 1 ? 'inline-block' : 'none';
+    });
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function backToPOList() {
+    fetch('/purchase-order/list-modal/', {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+        .then(r => r.json())
+        .then(data => {
+            if (data.html) {
+                document.getElementById('generic-modal-content').innerHTML = data.html;
+            }
+        });
+}
+
+// Handle form submission
+document.getElementById('po-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const csrftoken = getCookie('csrftoken');
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': csrftoken
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Purchase order created successfully!');
+            closeModal();
+            location.reload();
+        } else if (data.error) {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(err => {
+        console.error('Error submitting order:', err);
+        alert('Failed to create order');
+    });
+});
+</script>

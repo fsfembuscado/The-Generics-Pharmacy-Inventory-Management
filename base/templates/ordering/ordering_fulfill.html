@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Fulfill Order #{{ order.ordering_id }}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .fulfill-container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 20px auto;
+            max-width: 900px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #2196F3;
+            color: #333;
+        }
+        .customer-info {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        .customer-info p {
+            margin: 5px 0;
+        }
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .items-table th, .items-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        .items-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+        .amount-summary {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+        .amount-line {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        .amount-total {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2196F3;
+            border-top: 2px solid #ddd;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #555;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .btn-submit {
+            background: #e53935;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            margin-right: 10px;
+        }
+        .btn-cancel {
+            background: #757575;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-submit:hover { background: #c62828; }
+        .btn-cancel:hover { background: #616161; }
+        #finalAmountDisplay {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2196F3;
+        }
+        #changeAmount {
+            font-size: 20px;
+            font-weight: 500;
+            color: #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    {% include 'shared/sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="fulfill-container">
+            <h1>Fulfill Order #{{ order.ordering_id }}</h1>
+            
+            <div class="customer-info">
+                <p><strong>Customer:</strong> {{ order.customer_name }}</p>
+                <p><strong>Contact:</strong> {{ order.customer_contact|default:"Not provided" }}</p>
+                <p><strong>Order Date:</strong> {{ order.order_date|date:"M d, Y H:i" }}</p>
+            </div>
+
+            <div class="section">
+                <h2>Order Items</h2>
+                <table class="items-table">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.medicine.name }}</td>
+                            <td>{{ item.quantity }} {{ item.unit_type }}(s)</td>
+                            <td>₱{{ item.unit_price|floatformat:2 }}</td>
+                            <td>₱{{ item.line_total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <form method="post" id="fulfillForm">
+                {% csrf_token %}
+                
+                <div class="section">
+                    <h2>Payment Details</h2>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="discount_type">Discount Type</label>
+                            <select name="discount_type" id="discount_type" onchange="calculateTotal()">
+                                <option value="">No Discount</option>
+                                {% for dt in discount_types %}
+                                <option value="{{ dt.discount_type_id }}" data-rate="{{ dt.discount_rate }}">
+                                    {{ dt.discount_name }} ({{ dt.discount_rate }}%)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="payment_method">Payment Method *</label>
+                            <select name="payment_method" id="payment_method" required>
+                                {% for pm in payment_methods %}
+                                <option value="{{ pm.payment_method_id }}">{{ pm.method_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="amount-summary">
+                        <div class="amount-line">
+                            <span>Subtotal:</span>
+                            <span id="subtotalDisplay">₱{{ total_amount|floatformat:2 }}</span>
+                        </div>
+                        <div class="amount-line">
+                            <span>Discount:</span>
+                            <span id="discountDisplay">₱0.00</span>
+                        </div>
+                        <div class="amount-line amount-total">
+                            <span>Total Amount:</span>
+                            <span id="finalAmountDisplay">₱{{ total_amount|floatformat:2 }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash_received">Cash Received *</label>
+                        <input type="number" step="0.01" name="cash_received" id="cash_received" 
+                               placeholder="Enter amount received" required onkeyup="calculateChange()">
+                    </div>
+                    
+                    <div class="amount-summary" style="background: #e8f5e9;">
+                        <div class="amount-line">
+                            <span style="font-size: 20px; font-weight: 500;">Change:</span>
+                            <span id="changeAmount">₱0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 30px;">
+                    <button type="submit" class="btn-submit">Complete Sale & Fulfill Order</button>
+                    <a href="{% url 'ordering-detail' order.ordering_id %}" class="btn-cancel">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const subtotal = {{ total_amount }};
+        let finalAmount = subtotal;
+        
+        function calculateTotal() {
+            const discountSelect = document.getElementById('discount_type');
+            const selectedOption = discountSelect.options[discountSelect.selectedIndex];
+            const discountRate = parseFloat(selectedOption.dataset.rate || 0);
+            
+            const discountAmount = (subtotal * discountRate) / 100;
+            finalAmount = subtotal - discountAmount;
+            
+            document.getElementById('subtotalDisplay').textContent = '₱' + subtotal.toFixed(2);
+            document.getElementById('discountDisplay').textContent = '₱' + discountAmount.toFixed(2);
+            document.getElementById('finalAmountDisplay').textContent = '₱' + finalAmount.toFixed(2);
+            
+            calculateChange();
+        }
+        
+        function calculateChange() {
+            const cashReceived = parseFloat(document.getElementById('cash_received').value || 0);
+            const change = cashReceived - finalAmount;
+            
+            const changeDisplay = document.getElementById('changeAmount');
+            if (change >= 0) {
+                changeDisplay.textContent = '₱' + change.toFixed(2);
+                changeDisplay.style.color = '#4CAF50';
+            } else {
+                changeDisplay.textContent = '₱' + Math.abs(change).toFixed(2) + ' short';
+                changeDisplay.style.color = '#f44336';
+            }
+        }
+        
+        document.getElementById('fulfillForm').addEventListener('submit', function(e) {
+            const cashReceived = parseFloat(document.getElementById('cash_received').value || 0);
+            if (cashReceived < finalAmount) {
+                e.preventDefault();
+                alert('Cash received is less than the total amount!');
+                return false;
+            }
+        });
+        
+        function toggleDropdown(dropdownId) {
+            const dropdown = document.getElementById(dropdownId);
+            const arrow = dropdown.previousElementSibling.querySelector(".dropdown-arrow");
+            const isOpen = dropdown.style.display === "block";
+            
+            document.querySelectorAll(".dropdown-content").forEach(d => d.style.display = "none");
+            document.querySelectorAll(".dropdown-arrow").forEach(a => a.textContent = "▼");
+            
+            if (!isOpen) {
+                dropdown.style.display = "block";
+                arrow.textContent = "▲";
+            }
+        }
+    </script>
+</body>
+</html>

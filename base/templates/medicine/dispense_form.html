@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispense Medicine</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'medicine/dispensestyles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        {% include 'shared/sidebar.html' %}
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2>Dispense Medicine</h2>
+                <p>Add multiple medicines to create a sale transaction</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" novalidate id="dispense-form">
+                {% csrf_token %}
+                
+                <!-- Line Items Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h5>Line Items</h5>
+                        <button type="button" class="btn-add" id="add-row">
+                            + Add Medicine
+                        </button>
+                    </div>
+                    
+                    {{ formset.management_form }}
+                    <table>
+                        <thead style="color: #fff;">
+                            <tr>
+                                <th style="color: #fff;">Medicine</th>
+                                <th style="color: #fff;">Unit Type</th>
+                                <th style="color: #fff;">Quantity</th>
+                                <th style="color: #fff;">Selling Price</th>
+                                <th style="width: 100px; color: #fff;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="formset-body">
+                            {% for form in formset %}
+                            <tr class="formset-row">
+                                <td>{{ form.medicine }}</td>
+                                <td>{{ form.unit_type }}</td>
+                                <td>{{ form.quantity }}</td>
+                                <td class="line-total">₱0.00</td>
+                                <td>
+                                    <button type="button" class="btn-remove" onclick="removeRow(this)">Remove</button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    
+                    {% if formset.errors %}
+                    <div class="alert alert-danger" style="margin-top: 15px;">
+                        <strong>Form Errors:</strong>
+                        <ul>
+                        {% for form in formset %}
+                            {% if form.errors %}
+                                <li>Row {{ forloop.counter }}: {{ form.errors }}</li>
+                            {% endif %}
+                        {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Payment Details -->
+                <div class="payment-card">
+                    <h5>Payment Details</h5>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="discount_type_fk">Discount Type</label>
+                            <select name="discount_type_fk" id="discount_type_fk">
+                                <option value="">No Discount</option>
+                                {% for discount in discount_types %}
+                                <option value="{{ discount.pk }}" data-rate="{{ discount.discount_rate }}">
+                                    {{ discount.discount_name }} ({{ discount.discount_rate }}%)
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="payment_method">Payment Method</label>
+                            <select name="payment_method" id="payment_method" onchange="toggleReferenceNumber()">
+                                {% for method in payment_methods %}
+                                <option value="{{ method.pk }}" {% if method.method_name == 'Cash' %}selected{% endif %}>{{ method.method_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group" id="reference-number-group" style="display: none;">
+                            <label for="reference_number">Reference Number</label>
+                            <input type="text" name="reference_number" id="reference_number" placeholder="Enter reference number">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="cash_received">Cash Received</label>
+                        <input type="number" step="0.01" name="cash_received" id="cash_received" required>
+                    </div>
+
+                    <!-- Payment Summary -->
+                    <div class="payment-summary" id="payment-summary">
+                        <h6>Payment Summary</h6>
+                        <div class="summary-row">
+                            <span>Subtotal:</span>
+                            <strong id="summary-subtotal">₱0.00</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Discount (<span id="summary-discount-rate">0</span>%):</span>
+                            <strong id="summary-discount">₱0.00</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>VAT (12%):</span>
+                            <strong id="summary-vat">₱0.00</strong>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total:</span>
+                            <strong id="summary-total">₱0.00</strong>
+                        </div>
+                        <div class="summary-row">
+                            <span>Cash Received:</span>
+                            <strong id="summary-cash">₱0.00</strong>
+                        </div>
+                        <div class="summary-row change">
+                            <span>Change:</span>
+                            <strong id="summary-change">₱0.00</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button type="submit" class="btn-submit">Complete Sale & Print Invoice</button>
+                    <a href="{% url 'dashboard' %}" class="btn-cancel">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+<script>
+// Medicine data from backend
+const medicinesData = JSON.parse('{{ medicines_json|escapejs }}');
+const medicineMap = {};
+medicinesData.forEach(med => {
+    medicineMap[med.id] = med;
+});
+
+// Track form count for dynamic forms
+let formCount = {{ formset.total_form_count }};
+
+// Add new row
+document.getElementById('add-row').addEventListener('click', function(e) {
+    e.preventDefault();
+    const tbody = document.getElementById('formset-body');
+    const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+    
+    const firstRow = tbody.querySelector('.formset-row');
+    const newRow = firstRow.cloneNode(true);
+    
+    // Update form indices
+    const formIdx = formCount;
+    newRow.innerHTML = newRow.innerHTML.replace(/form-0-/g, `form-${formIdx}-`);
+    newRow.innerHTML = newRow.innerHTML.replace(/id_form-0-/g, `id_form-${formIdx}-`);
+    
+    // Clear values
+    newRow.querySelectorAll('input').forEach(input => {
+        if (input.type !== 'hidden' && !input.name.includes('TOTAL_FORMS') && !input.name.includes('INITIAL_FORMS')) {
+            input.value = '';
+        }
+    });
+    newRow.querySelectorAll('select').forEach(select => {
+        select.selectedIndex = 0;
+    });
+    newRow.querySelector('.line-total').textContent = '₱0.00';
+    
+    tbody.appendChild(newRow);
+    formCount++;
+    totalForms.value = formCount;
+    
+    attachRowListeners(newRow);
+    recalculateTotals();
+});
+
+// Remove row function
+function removeRow(button) {
+    const tbody = document.getElementById('formset-body');
+    const rows = tbody.querySelectorAll('.formset-row');
+    
+    // Keep at least one row
+    if (rows.length > 1) {
+        button.closest('tr').remove();
+        
+        // Update form count
+        const totalForms = document.getElementById('id_form-TOTAL_FORMS');
+        formCount = rows.length - 1; // Subtract 1 because we just removed one
+        totalForms.value = formCount;
+        
+        recalculateTotals();
+    } else {
+        alert('You must have at least one medicine to dispense.');
+    }
+}
+
+// Attach listeners to existing and new rows
+function attachRowListeners(row) {
+    const medicineSelect = row.querySelector('select[name*="medicine"]');
+    const qtyInput = row.querySelector('input[name*="quantity"]');
+    const unitSelect = row.querySelector('select[name*="unit_type"]');
+    
+    if (medicineSelect) medicineSelect.addEventListener('change', () => updateRowTotal(row));
+    if (qtyInput) qtyInput.addEventListener('input', () => updateRowTotal(row));
+    if (unitSelect) unitSelect.addEventListener('change', () => updateRowTotal(row));
+}
+
+// Update single row total
+function updateRowTotal(row) {
+    const medicineSelect = row.querySelector('select[name*="medicine"]');
+    const qtyInput = row.querySelector('input[name*="quantity"]');
+    const unitSelect = row.querySelector('select[name*="unit_type"]');
+    
+    console.log('updateRowTotal called', {
+        hasMedicine: !!medicineSelect,
+        hasQty: !!qtyInput,
+        hasUnit: !!unitSelect
+    });
+    
+    if (!medicineSelect || !qtyInput || !unitSelect) {
+        console.log('Missing elements in row');
+        return;
+    }
+    
+    const medicineId = medicineSelect.value;
+    const qty = parseFloat(qtyInput.value || 0);
+    const unitType = unitSelect.value || 'piece';
+    
+    console.log('Row values:', { medicineId, qty, unitType });
+    
+    if (!medicineId || qty <= 0) {
+        row.querySelector('.line-total').textContent = '₱0.00';
+        recalculateTotals();
+        return;
+    }
+    
+    const medicine = medicineMap[medicineId];
+    if (!medicine) {
+        console.log('Medicine not found:', medicineId);
+        row.querySelector('.line-total').textContent = '₱0.00';
+        recalculateTotals();
+        return;
+    }
+    
+    const perPiecePrice = parseFloat(medicine.selling_price || 0);
+    
+    // Convert to pieces
+    let pieces = qty;
+    if (unitType === 'pack') {
+        pieces = qty * (medicine.units_per_pack || 1);
+    } else if (unitType === 'box') {
+        pieces = qty * (medicine.packs_per_box || 1) * (medicine.units_per_pack || 1);
+    }
+    
+    const lineTotal = pieces * perPiecePrice;
+    
+    console.log('Calculated:', { perPiecePrice, pieces, lineTotal });
+    
+    row.querySelector('.line-total').textContent = `₱${lineTotal.toFixed(2)}`;
+    
+    recalculateTotals();
+}
+
+// Recalculate totals with real-time updates including VAT
+function recalculateTotals() {
+    let subtotal = 0;
+    
+    document.querySelectorAll('.formset-row').forEach(row => {
+        const lineTotal = row.querySelector('.line-total').textContent;
+        const amount = parseFloat(lineTotal.replace(/[₱,]/g, '')) || 0;
+        subtotal += amount;
+    });
+    
+    const discountSelect = document.getElementById('discount_type_fk');
+    const discountRate = parseFloat(
+        discountSelect.options[discountSelect.selectedIndex]?.dataset?.rate || 0
+    );
+    
+    const discountAmount = subtotal * (discountRate / 100);
+    const subtotalAfterDiscount = subtotal - discountAmount;
+    
+    // Calculate 12% VAT
+    const vat = subtotalAfterDiscount * 0.12;
+    const total = subtotalAfterDiscount + vat;
+    
+    const cashInput = document.getElementById('cash_received');
+    const cash = parseFloat(cashInput?.value || 0);
+    const change = Math.max(0, cash - total);
+    
+    document.getElementById('summary-subtotal').textContent = `₱${subtotal.toFixed(2)}`;
+    document.getElementById('summary-discount-rate').textContent = discountRate.toFixed(0);
+    document.getElementById('summary-discount').textContent = `₱${discountAmount.toFixed(2)}`;
+    document.getElementById('summary-vat').textContent = `₱${vat.toFixed(2)}`;
+    document.getElementById('summary-total').textContent = `₱${total.toFixed(2)}`;
+    document.getElementById('summary-cash').textContent = `₱${cash.toFixed(2)}`;
+    document.getElementById('summary-change').textContent = `₱${change.toFixed(2)}`;
+}
+
+// Toggle reference number field based on payment method
+function toggleReferenceNumber() {
+    const paymentSelect = document.getElementById('payment_method');
+    const referenceGroup = document.getElementById('reference-number-group');
+    const selectedText = paymentSelect.options[paymentSelect.selectedIndex].text.toLowerCase();
+    
+    // Show reference number for digital payment methods
+    if (selectedText.includes('gcash') || selectedText.includes('paymaya') || 
+        selectedText.includes('credit card') || selectedText.includes('bank transfer')) {
+        referenceGroup.style.display = 'block';
+        document.getElementById('reference_number').required = true;
+    } else {
+        referenceGroup.style.display = 'none';
+        document.getElementById('reference_number').required = false;
+        document.getElementById('reference_number').value = '';
+    }
+}
+
+// Initialize
+console.log('Initializing dispense form...');
+console.log('Medicine data loaded:', medicinesData.length, 'medicines');
+
+document.querySelectorAll('.formset-row').forEach(row => {
+    attachRowListeners(row);
+    // Set default unit type to pack if empty
+    const unitSelect = row.querySelector('select[name*="unit_type"]');
+    if (unitSelect && !unitSelect.value) {
+        unitSelect.value = 'pack';
+    }
+    updateRowTotal(row);
+});
+
+const discountEl = document.getElementById('discount_type_fk');
+const cashEl = document.getElementById('cash_received');
+
+if (discountEl) {
+    discountEl.addEventListener('change', function() {
+        console.log('Discount changed');
+        recalculateTotals();
+    });
+}
+
+if (cashEl) {
+    cashEl.addEventListener('input', function() {
+        console.log('Cash changed:', this.value);
+        recalculateTotals();
+    });
+    cashEl.addEventListener('keyup', recalculateTotals);
+}
+
+recalculateTotals();
+console.log('Initialization complete');
+</script>
+</body>
+</html>

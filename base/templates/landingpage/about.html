@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TGP Pharmacy</title>
-    
+    <title>About TGP - The Generics Pharmacy</title>
+
     {% load static %}
+    <link rel="stylesheet" href="{% static 'landingpage/navigationbarlanding.css' %}">
     <link rel="stylesheet" href="{% static 'landingpage/aboutstyles.css' %}">
 </head>
 <body>
@@ -16,16 +17,58 @@
         <nav>
             <ul>    
                 <li><a href="{% url 'landingpage' %}">HOME</a></li>
-                <li><a href="{% url 'services' %}">SERVICES</a></li>
                 <li><a href="{% url 'about' %}" class="active">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
                 <li><a href="{% url 'contact' %}">CONTACT US</a></li>
             </ul>
         </nav>
         <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
     </header>
 
-    <section class="body">
-        <h1>ABOUT US</h1>
-    </section>
+    <main class="about-container">
+        <h1 class="about-title">About TGP</h1>
+
+        <section class="profile-section">
+            <div class="profile-image">
+                <img src="{% static 'landingpage/photo/tgpbuilding.jpg' %}" alt="TGP Building">
+            </div>
+            <div class="profile-text">
+                <h2>Profile</h2>
+                <p>THE GENERICS PHARMACY (TGP) started out as small pharmaceutical company called Pacific Insular Company in 1949. Acknowledging the dire need for quality medicines at affordable prices, the company focused on generic medicines to provide Filipinos with more affordable alternatives.</p>
+                <p>In 2001, the company ventured into retail, starting only with a single outlet. As demand grew, the company decided to make its medicines more accessible throughout the country through the FRANCHISING business model. The new business model started in 2007, starting with 20 outlets within Metro Manila.</p>
+                <p>TGP has revolutionized the entire pharmaceutical healthcare & retail industries with its bold and different path for growth. Who would have thought that a pharmacy or drugstore with pure generic drugs rapidly take off? After some initial struggles and birth pains, generic medicine has been embraced by the healthcare landscape. Generic medicine has proven to be effective, high quality, and truly affordable for every Juan.</p>
+                <p>Celebrating its 15th year in 2022, TGP has dotted the entire archipelago with more than 2000 strong outlets, making healthcare accessible to every Filipino. Along the way TGP has also garnered numerous awards and recognitions from various entrepreneurship, retail, franchising, and marketing organizations. This is solid proof that TGP is now well accepted and trusted as the source for quality and affordable generic medicines. Millions of Filipinos now see TGP as their friendly neighborhood pharmacy outlet.</p>
+            </div>
+        </section>
+
+        <section class="mission-vision">
+            <div class="mission">
+                <h2>Mission</h2>
+                <h3>A Filipino Deserves Nothing Less for Less Cost</h3>
+                <p>We understand the value of a healthy Filipino in making a happy home and in nation building. Thus, we shall address the health needs of every Filipino by providing a complete range of safe, quality, and cost-effective generic medicines and healthcare products and services. As we profit from accomplishing this mission, we ensure our growth is shared among our franchisees, partners, suppliers, and employees.</p>
+            </div>
+
+            <div class="vision">
+                <h2>Vision</h2>
+                <h3>Because We Care, You Matter</h3>
+                <p>With a God-centered organizational philosophy, TGP Pharma Inc. shall be a strong partner of every Filipino in providing quality, affordable, and accessible generic medicines and healthcare products and services leading to a healthy and productive life.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="footer-logo">
+            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="70">
+        </div>
+        <nav>
+            <ul>
+                <li><a href="{% url 'landingpage' %}">HOME</a></li>
+                <li><a href="{% url 'about' %}">ABOUT US</a></li>
+                <li><a href="{% url 'services' %}">SERVICES</a></li>
+                <li><a href="{% url 'contact' %}">CONTACT US</a></li>
+            </ul>
+        </nav>
+        <p>© 2025 The Generics Pharmacy. Kalusugan Para sa Lahat.</p>
+    </footer>
 </body>
 </html>

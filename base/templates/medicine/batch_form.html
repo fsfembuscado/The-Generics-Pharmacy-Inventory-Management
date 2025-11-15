@@ -1,0 +1,39 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>{{ view.object|default:"Add New Batch" }}</h2>
+  
+  <form method="post">
+    {% csrf_token %}
+    
+    <div class="mb-3">
+      <label for="id_medicine" class="form-label">Product</label>
+      {{ form.medicine }}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_quantity" class="form-label">Quantity</label>
+      {{ form.quantity }}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_location" class="form-label">Location</label>
+      {{ form.location }}
+    </div>
+
+    <div class="mb-3">
+      <label for="id_date_received" class="form-label">Receive Date</label>
+      {{ form.date_received }}
+    </div>
+
+    <div class="form-check mb-4">
+      <label class="form-check-label" for="id_is_recalled">
+        {{ form.is_recalled }} Mark as Recalled (damaged or withdrawn)
+      </label>
+    </div>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'batch-list' %}" class="btn btn-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}

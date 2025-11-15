@@ -1,0 +1,76 @@
+{% load static %}
+<div style="padding: 5px;">
+    <div style="background: #f5f5f5; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; width: 40%; color: #555;">Batch ID:</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;">#{{ batch.id }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; color: #555;">Medicine:</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;">
+                    <strong>{{ batch.medicine.name }}</strong>
+                    {% if batch.medicine.brand %}
+                    <br><small style="color: #666;">Brand: {{ batch.medicine.brand }}</small>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; color: #555;">Quantity (Boxes):</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;"><strong>{{ batch.quantity }}</strong></td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; color: #555;">Total Pieces:</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;">
+                    <strong>{{ batch.total_pieces }} pieces</strong>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; color: #555;">Location:</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;">{{ batch.get_location_display }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd; font-weight: bold; color: #555;">Received Date:</td>
+                <td style="padding: 10px 5px; border-bottom: 1px solid #ddd;">{{ batch.date_received|date:"M d, Y" }}</td>
+            </tr>
+            <tr>
+                <td style="padding: 10px 5px; font-weight: bold; color: #555;">Expiry Date:</td>
+                <td style="padding: 10px 5px;">
+                    {{ batch.expiry_date|date:"M d, Y" }}
+                    {% load static %}
+                    {% now "Y-m-d" as today_str %}
+                    {% if batch.expiry_date|date:"Y-m-d" < today_str %}
+                        <span style="background: #d32f2f; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold; display: inline-block; margin-left: 10px;">EXPIRED</span>
+                    {% else %}
+                        <span style="background: #f57c00; color: white; padding: 4px 12px; border-radius: 12px; font-weight: bold; display: inline-block; margin-left: 10px;">EXPIRING SOON</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div style="color: #666; margin-bottom: 20px;">
+        <p style="font-weight: bold; margin-bottom: 10px;">What will happen:</p>
+        <ul style="margin: 0; padding-left: 20px;">
+            <li style="margin: 5px 0;">A stock movement record will be created with reason "expired"</li>
+            <li style="margin: 5px 0;">The batch will be removed from active inventory</li>
+            <li style="margin: 5px 0;">An activity log entry will be created for audit trail</li>
+            <!-- <li style="margin: 5px 0;">This action cannot be undone</li> -->
+        </ul>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <label for="removal_reason" style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Reason for Removal: <span style="color: #d32f2f;">*</span></label>
+        <textarea id="removal_reason" name="removal_reason" rows="3" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit; font-size: 0.95em; resize: vertical;" placeholder="Enter the reason for removing this expired batch..."></textarea>
+    </div>
+
+    {% csrf_token %}
+    <div style="display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px;">
+        <button onclick="closeStockOutModal()" type="button" style="padding: 12px 30px; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; background: #757575; color: white; transition: all 0.3s;">
+            Cancel
+        </button>
+        <button onclick="submitStockOut({{ batch.id }})" type="button" style="padding: 12px 30px; border: none; border-radius: 5px; font-size: 1em; cursor: pointer; background: #d32f2f; color: white; transition: all 0.3s;">
+            Confirm Remove
+        </button>
+    </div>
+</div>

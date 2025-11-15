@@ -1,0 +1,26 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr; gap: 15px; padding: 20px; }
+.modal-grid label { display: flex; flex-direction: column; font-weight: 500; }
+.modal-grid input, .modal-grid select, .modal-grid textarea { margin-top: 5px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; padding: 0 20px 20px; }
+</style>
+
+<form method="post" id="medicine-update-form" data-type="medicine" action="{% url 'medicine-update-modal' medicine.id %}">
+    {% csrf_token %}
+    <h3 style="margin-top:0; padding: 20px 20px 10px;">Edit Medicine</h3>
+    <div class="modal-grid">
+        <label>Name {{ form.name }}</label>
+        <label>Brand {{ form.brand }}</label>
+        <label>Category {{ form.category }}</label>
+        <label>Product Type {{ form.product_type }}</label>
+        <label>Dosage Form {{ form.dosage_form }}</label>
+        <label>Strength {{ form.strength }}</label>
+        <label>Pieces / Pack {{ form.units_per_pack }}</label>
+        <label>Packs / Box {{ form.packs_per_box }}</label>
+        <label>Description {{ form.description }}</label>
+    </div>
+    <div class="modal-actions">
+        <button type="submit" class="btn-edit" style="background:#4CAF50;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Save</button>
+        <button type="button" class="block-btn" style="padding:10px 20px;border-radius:4px;cursor:pointer;" onclick="closeModal()">Cancel</button>
+    </div>
+</form>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stock Out Expired Batch</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .confirm-card {
+            max-width: 700px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .confirm-header {
+            background: #d32f2f;
+            color: white;
+            padding: 20px;
+            margin: -30px -30px 20px -30px;
+            border-radius: 8px 8px 0 0;
+        }
+        .confirm-header h2 {
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .warning-icon {
+            font-size: 2em;
+        }
+        .batch-details {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .batch-details table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .batch-details td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .batch-details td:first-child {
+            font-weight: bold;
+            width: 40%;
+            color: #555;
+        }
+        .batch-details tr:last-child td {
+            border-bottom: none;
+        }
+        .expired-badge {
+            background: #d32f2f;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: flex-end;
+        }
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        .btn-danger {
+            background: #d32f2f;
+            color: white;
+        }
+        .btn-danger:hover {
+            background: #b71c1c;
+        }
+        .btn-secondary {
+            background: #757575;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #616161;
+        }
+        .warning-message {
+            background: #fff3e0;
+            border-left: 4px solid #f57c00;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .warning-message p {
+            margin: 5px 0;
+            color: #ef6c00;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+
+    <div class="main-content">
+        <div class="confirm-card">
+            <div class="confirm-header">
+                <h2><span class="warning-icon">⚠️</span> Stock Out Expired Batch</h2>
+            </div>
+
+            <div class="warning-message">
+                <p><strong>⚠ Warning:</strong> This action will permanently remove this expired batch from inventory and create a stock movement record for audit purposes.</p>
+            </div>
+
+            <div class="batch-details">
+                <table>
+                    <tr>
+                        <td>Batch ID:</td>
+                        <td>#{{ batch.id }}</td>
+                    </tr>
+                    <tr>
+                        <td>Medicine:</td>
+                        <td>
+                            <strong>{{ batch.medicine.name }}</strong>
+                            {% if batch.medicine.brand %}
+                            <br><small style="color: #666;">Brand: {{ batch.medicine.brand }}</small>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Quantity (Boxes):</td>
+                        <td><strong>{{ batch.quantity }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Total Pieces:</td>
+                        <td>
+                            {% widthratio batch.quantity 1 batch.medicine.packs_per_box as temp_total %}
+                            {% widthratio temp_total 1 batch.medicine.units_per_pack as final_total %}
+                            <strong>{{ final_total|default:0 }} pieces</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Location:</td>
+                        <td>{{ batch.get_location_display }}</td>
+                    </tr>
+                    <tr>
+                        <td>Received Date:</td>
+                        <td>{{ batch.date_received|date:"M d, Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td>Expiry Date:</td>
+                        <td>
+                            {{ batch.expiry_date|date:"M d, Y" }}
+                            <span class="expired-badge">EXPIRED</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+
+            <p style="color: #666; margin: 20px 0;">
+                <strong>What will happen:</strong>
+            </p>
+            <ul style="color: #666; margin-left: 20px;">
+                <li>A stock movement record will be created with reason "expired"</li>
+                <li>The batch will be removed from active inventory</li>
+                <li>An activity log entry will be created for audit trail</li>
+                <li>This action cannot be undone</li>
+            </ul>
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="action-buttons">
+                    <a href="{% url 'expiration-monitor' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">Confirm Stock Out</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const dropdownLi = dropdown.parentElement;
+        dropdown.classList.toggle('open');
+        dropdownLi.classList.toggle('open');
+    }
+</script>
+</body>
+</html>

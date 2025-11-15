@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Price History</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .filter-section {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+        }
+        .filter-form {
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .filter-group label {
+            font-weight: 500;
+            font-size: 14px;
+            color: #555;
+        }
+        .filter-group select,
+        .filter-group input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+        .btn-filter {
+            padding: 8px 20px;
+            border: none;
+            background: #e53935;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-filter:hover {
+            background: #c62828;
+        }
+        .btn-clear {
+            padding: 8px 20px;
+            border: none;
+            background: #999;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-clear:hover {
+            background: #777;
+        }
+        .price-up {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .price-down {
+            color: #388e3c;
+            font-weight: bold;
+        }
+        .price-same {
+            color: #666;
+        }
+        .arrow {
+            font-size: 1.2em;
+            margin: 0 4px;
+        }
+        .pagination {
+            text-align: center;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+        }
+        .pagination a,
+        .pagination .current {
+            padding: 8px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .pagination a {
+            background: #2196F3;
+            color: white;
+        }
+        .pagination a:hover {
+            background: #0b7dda;
+        }
+        .pagination .current {
+            background: #666;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+
+    <div class="main-content">
+        <h2>Price Change History</h2>
+
+        <div class="filter-section">
+            <form method="GET" class="filter-form">
+                <div class="filter-group">
+                    <label>Medicine:</label>
+                    <select name="medicine">
+                        <option value="">All Medicines</option>
+                        {% for med in medicines %}
+                            <option value="{{ med.id }}" {% if selected_medicine == med.id|stringformat:"s" %}selected{% endif %}>
+                                {{ med.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Changed By:</label>
+                    <select name="user">
+                        <option value="">All Users</option>
+                        {% for u in users %}
+                            <option value="{{ u.id }}" {% if selected_user == u.id|stringformat:"s" %}selected{% endif %}>
+                                {{ u.username }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label>Start Date:</label>
+                    <input type="date" name="start_date" value="{{ start_date }}">
+                </div>
+                
+                <div class="filter-group">
+                    <label>End Date:</label>
+                    <input type="date" name="end_date" value="{{ end_date }}">
+                </div>
+                
+                <div class="filter-buttons">
+                    <button type="submit" class="btn-filter">Filter</button>
+                    <a href="{% url 'price-history' %}" class="btn-clear">Clear</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 12%;">Date & Time</th>
+                        <th>Medicine</th>
+                        <th style="width: 18%;">Base Price Change</th>
+                        <th style="width: 18%;">Selling Price Change</th>
+                        <th style="width: 12%;">Changed By</th>
+                        <th>Reason</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for change in price_changes %}
+                    <tr>
+                        <td>
+                            {{ change.change_date|date:"M d, Y" }}
+                            <small style="display: block; color: #666;">{{ change.change_date|date:"g:i A" }}</small>
+                        </td>
+                        <td>
+                            <strong>{{ change.medicine.name }}</strong>
+                            <small style="display: block; color: #666;">{{ change.medicine.brand }}</small>
+                        </td>
+                        <td>
+                            ₱{{ change.old_base_price|floatformat:2 }}
+                            {% if change.old_base_price < change.new_base_price %}
+                                <span class="price-up arrow">↑</span>
+                            {% elif change.old_base_price > change.new_base_price %}
+                                <span class="price-down arrow">↓</span>
+                            {% else %}
+                                <span class="price-same">→</span>
+                            {% endif %}
+                            ₱{{ change.new_base_price|floatformat:2 }}
+                            {% if change.old_base_price != change.new_base_price %}
+                                <small style="display: block; color: #666;">
+                                    {% widthratio change.new_base_price change.old_base_price 100|add:"-100" as percent_change %}
+                                    ({{ percent_change|floatformat:1 }}%)
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            ₱{{ change.old_selling_price|floatformat:2 }}
+                            {% if change.old_selling_price < change.new_selling_price %}
+                                <span class="price-up arrow">↑</span>
+                            {% elif change.old_selling_price > change.new_selling_price %}
+                                <span class="price-down arrow">↓</span>
+                            {% else %}
+                                <span class="price-same">→</span>
+                            {% endif %}
+                            ₱{{ change.new_selling_price|floatformat:2 }}
+                            {% if change.old_selling_price != change.new_selling_price %}
+                                <small style="display: block; color: #666;">
+                                    {% widthratio change.new_selling_price change.old_selling_price 100|add:"-100" as percent_change %}
+                                    ({{ percent_change|floatformat:1 }}%)
+                                </small>
+                            {% endif %}
+                        </td>
+                        <td>{{ change.changed_by.username|default:"System" }}</td>
+                        <td><small>{{ change.reason|default:"-" }}</small></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: #999;">No price changes found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if is_paginated %}
+        <div class="pagination">
+            {% if page_obj.has_previous %}
+                <a href="?page=1&medicine={{ selected_medicine }}&user={{ selected_user }}&start_date={{ start_date }}&end_date={{ end_date }}">First</a>
+                <a href="?page={{ page_obj.previous_page_number }}&medicine={{ selected_medicine }}&user={{ selected_user }}&start_date={{ start_date }}&end_date={{ end_date }}">Previous</a>
+            {% endif %}
+            
+            <span class="current">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}&medicine={{ selected_medicine }}&user={{ selected_user }}&start_date={{ start_date }}&end_date={{ end_date }}">Next</a>
+                <a href="?page={{ page_obj.paginator.num_pages }}&medicine={{ selected_medicine }}&user={{ selected_user }}&start_date={{ start_date }}&end_date={{ end_date }}">Last</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const dropdownLi = dropdown.parentElement;
+        
+        // Toggle the 'open' class on both the dropdown menu and the parent li
+        dropdown.classList.toggle('open');
+        dropdownLi.classList.toggle('open');
+    }
+</script>
+</body>
+</html>

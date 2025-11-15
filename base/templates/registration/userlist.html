@@ -6,35 +6,192 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
     <link rel="stylesheet" href="{% static 'registration/userliststyles.css' %}">
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
+        .modal h2 {
+            margin-top: 0;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .form-group input[type="checkbox"] {
+            margin-right: 5px;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .btn-modal {
+            background: #e53935;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-modal:hover {
+            background: #c62828;
+        }
+        .btn-cancel {
+            background: #999;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 10px;
+        }
+        .btn-cancel:hover {
+            background: #777;
+        }
+        .search-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-create {
+            background: #2196F3;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-create:hover {
+            background: #0b7dda;
+        }
+        .error-message {
+            color: #d32f2f;
+            margin-top: 10px;
+            padding: 10px;
+            background: #ffebee;
+            border-radius: 4px;
+        }
+        .role-badge {
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .role-manager {
+            background: #ff5722;
+            color: white;
+        }
+        .role-staff {
+            background: #2196F3;
+            color: white;
+        }
+        .role-user {
+            background: #9e9e9e;
+            color: white;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .btn-edit, .btn-password {
+            padding: 5px 10px;
+            font-size: 12px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .btn-edit {
+            background: #ff9800;
+            color: white;
+        }
+        .btn-edit:hover {
+            background: #f57c00;
+        }
+        .btn-password {
+            background: #9c27b0;
+            color: white;
+        }
+        .btn-password:hover {
+            background: #7b1fa2;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
-    <div class="sidebar" id="sidebar">
-        <div class="logo-container">
-            <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo" width="100">
-            <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
-        </div>
-        <ul class="menu">
-            <li><a href="{% url 'tasks' %}">Dashboard</a></li>
-            <li class="active"><a href="{% url 'user-list' %}">User Accounts</a></li>
-            <li><a href="{% url 'update-account' %}">Update Account</a></li>
-            <li><a href="{% url 'update-password' %}">Update Password</a></li>
-            <li><a>               
-                <form method="POST" action="{% url 'logout' %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn-logout">Logout</button>
-                </form>
-            </a></li>
-        </ul>
-    </div>
+    {% include 'shared/sidebar.html' %}
 
     <div class="main-content">
         <h2>User Accounts</h2>
 
-        <form method="get" class="search-form">
-            <input type="text" name="search" placeholder="Search users..." value="{{ request.GET.search }}">
-            <button type="submit">Search</button>
-        </form>
+        {% if messages %}
+            <div style="margin-bottom: 20px;">
+                {% for message in messages %}
+                    <div style="padding: 10px; margin-bottom: 10px; border-radius: 4px; 
+                                {% if message.tags == 'success' %}background: #d4edda; color: #155724;{% endif %}
+                                {% if message.tags == 'error' %}background: #f8d7da; color: #721c24;{% endif %}
+                                {% if message.tags == 'info' %}background: #d1ecf1; color: #0c5460;{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="search-form">
+            <form method="get" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" name="search" placeholder="Search users..." value="{{ request.GET.search }}" style="flex: 1;">
+                <button type="submit">Search</button>
+            </form>
+            <button class="btn-create" onclick="openCreateModal()">+ Create Account</button>
+        </div>
 
         <div class="table-container">
             <table>
@@ -42,19 +199,29 @@
                     <tr>
                         <th>Username</th>
                         <th>Email</th>
+                        <th>Role</th>
                         <th>Last Login</th>
                         <th>Date Joined</th>
                         <th>Status</th>
-                        <th>Action</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                 {% for user in users %}
                     <tr>
                         <td>{{ user.username }}</td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.last_login }}</td>
-                        <td>{{ user.date_joined }}</td>
+                        <td>{{ user.email|default:"-" }}</td>
+                        <td>
+                            {% if user.is_superuser %}
+                                <span class="role-badge role-manager">Manager</span>
+                            {% elif user.is_staff %}
+                                <span class="role-badge role-staff">Staff</span>
+                            {% else %}
+                                <span class="role-badge role-user">User</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ user.last_login|date:"M d, Y g:i A"|default:"-" }}</td>
+                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
                         <td>
                             {% if user.is_active %}
                                 <span class="status active">Active</span>
@@ -63,23 +230,31 @@
                             {% endif %}
                         </td>
                         <td>
-                            {% if not request.user == user %}
-                                <form action="{% url 'toggle-block' user.pk %}" method="post" style="display:inline;">
-                                    {% csrf_token %}
-                                    {% if user.is_active %}
-                                        <button type="submit" class="block-btn">Block</button>
-                                    {% else %}
-                                        <button type="submit" class="unblock-btn">Unblock</button>
-                                    {% endif %}
-                                </form>
-                            {% else %}
-                                (You)
-                            {% endif %}
+                            <div class="action-buttons">
+                                {% if not request.user == user %}
+                                    <button class="btn-edit" onclick="openEditModal({{ user.id }}, '{{ user.username }}', '{{ user.email }}', {{ user.is_staff|yesno:'true,false' }}, {{ user.is_superuser|yesno:'true,false' }})">
+                                        Edit
+                                    </button>
+                                    <button class="btn-password" onclick="openPasswordModal({{ user.id }}, '{{ user.username }}')">
+                                        Password
+                                    </button>
+                                    <form action="{% url 'toggle-block' user.pk %}" method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        {% if user.is_active %}
+                                            <button type="submit" class="block-btn">Block</button>
+                                        {% else %}
+                                            <button type="submit" class="unblock-btn">Unblock</button>
+                                        {% endif %}
+                                    </form>
+                                {% else %}
+                                    <span style="color: #999;">(You)</span>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" style="text-align:center;">No users found.</td>
+                        <td colspan="7" style="text-align:center;">No users found.</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -88,9 +263,269 @@
     </div>
 </div>
 
+<!-- Create User Modal -->
+<div id="createModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeCreateModal()">&times;</span>
+        <h2>Create New User Account</h2>
+        <form id="createUserForm">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email">
+            </div>
+            <div class="form-group">
+                <label>Password *</label>
+                <input type="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label>Role Designation</label>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" name="is_staff" id="create_is_staff">
+                        Staff Member
+                    </label>
+                    <label>
+                        <input type="checkbox" name="is_superuser" id="create_is_superuser">
+                        Manager (Admin)
+                    </label>
+                </div>
+                <small style="color: #666; margin-top: 5px; display: block;">
+                    Staff can manage inventory. Managers have full system access.
+                </small>
+            </div>
+            <div id="createError" class="error-message" style="display: none;"></div>
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn-modal">Create Account</button>
+                <button type="button" class="btn-cancel" onclick="closeCreateModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeEditModal()">&times;</span>
+        <h2>Update User Account</h2>
+        <form id="editUserForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="edit_user_id">
+            <div class="form-group">
+                <label>Username *</label>
+                <input type="text" name="username" id="edit_username" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" id="edit_email">
+            </div>
+            <div class="form-group">
+                <label>Role Designation</label>
+                <div class="checkbox-group">
+                    <label>
+                        <input type="checkbox" name="is_staff" id="edit_is_staff">
+                        Staff Member
+                    </label>
+                    <label>
+                        <input type="checkbox" name="is_superuser" id="edit_is_superuser">
+                        Manager (Admin)
+                    </label>
+                </div>
+            </div>
+            <div id="editError" class="error-message" style="display: none;"></div>
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn-modal">Update Account</button>
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Change Password Modal -->
+<div id="passwordModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closePasswordModal()">&times;</span>
+        <h2>Change User Password</h2>
+        <p>Changing password for: <strong id="password_username"></strong></p>
+        <form id="passwordForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="password_user_id">
+            <div class="form-group">
+                <label>New Password *</label>
+                <input type="password" name="new_password" id="new_password" required>
+            </div>
+            <div class="form-group">
+                <label>Confirm Password *</label>
+                <input type="password" name="confirm_password" id="confirm_password" required>
+            </div>
+            <div id="passwordError" class="error-message" style="display: none;"></div>
+            <div style="margin-top: 20px;">
+                <button type="submit" class="btn-modal">Change Password</button>
+                <button type="button" class="btn-cancel" onclick="closePasswordModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function toggleSidebar() {
         document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    // Create User Modal Functions
+    function openCreateModal() {
+        document.getElementById('createModal').style.display = 'block';
+        document.getElementById('createUserForm').reset();
+        document.getElementById('createError').style.display = 'none';
+    }
+
+    function closeCreateModal() {
+        document.getElementById('createModal').style.display = 'none';
+    }
+
+    // Edit User Modal Functions
+    function openEditModal(userId, username, email, isStaff, isSuperuser) {
+        document.getElementById('editModal').style.display = 'block';
+        document.getElementById('edit_user_id').value = userId;
+        document.getElementById('edit_username').value = username;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_is_staff').checked = isStaff;
+        document.getElementById('edit_is_superuser').checked = isSuperuser;
+        document.getElementById('editError').style.display = 'none';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    // Password Modal Functions
+    function openPasswordModal(userId, username) {
+        document.getElementById('passwordModal').style.display = 'block';
+        document.getElementById('password_user_id').value = userId;
+        document.getElementById('password_username').textContent = username;
+        document.getElementById('passwordForm').reset();
+        document.getElementById('password_user_id').value = userId;
+        document.getElementById('passwordError').style.display = 'none';
+    }
+
+    function closePasswordModal() {
+        document.getElementById('passwordModal').style.display = 'none';
+    }
+
+    // Close modals when clicking outside
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+
+    // Handle Create User Form Submission
+    document.getElementById('createUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch('{% url "create-user-ajax" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeCreateModal();
+                location.reload();
+            } else {
+                document.getElementById('createError').textContent = data.error;
+                document.getElementById('createError').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            document.getElementById('createError').textContent = 'An error occurred. Please try again.';
+            document.getElementById('createError').style.display = 'block';
+        });
+    });
+
+    // Handle Edit User Form Submission
+    document.getElementById('editUserForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('edit_user_id').value;
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`/users/${userId}/update-account-ajax/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closeEditModal();
+                location.reload();
+            } else {
+                document.getElementById('editError').textContent = data.error;
+                document.getElementById('editError').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            document.getElementById('editError').textContent = 'An error occurred. Please try again.';
+            document.getElementById('editError').style.display = 'block';
+        });
+    });
+
+    // Handle Password Form Submission
+    document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const userId = document.getElementById('password_user_id').value;
+        const formData = new FormData(this);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        fetch(`/users/${userId}/update-password-ajax/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                closePasswordModal();
+                location.reload();
+            } else {
+                document.getElementById('passwordError').textContent = data.error;
+                document.getElementById('passwordError').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            document.getElementById('passwordError').textContent = 'An error occurred. Please try again.';
+            document.getElementById('passwordError').style.display = 'block';
+        });
+    });
+
+    function toggleSidebar() {
+        document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function toggleDropdown(id) {
+        const dropdown = document.getElementById(id);
+        const dropdownLi = dropdown.parentElement;
+        
+        // Toggle the 'open' class on both the dropdown menu and the parent li
+        dropdown.classList.toggle('open');
+        dropdownLi.classList.toggle('open');
     }
 </script>
 </body>

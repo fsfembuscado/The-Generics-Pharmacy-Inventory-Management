@@ -1,0 +1,53 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>{% if view.object %}Edit Product{% else %}Add New Product{% endif %}</h2>
+
+  {% if is_update %}
+  <div style="background: #fff3e0; border-left: 4px solid #f57c00; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+    <strong>ℹ️ Price Management:</strong> To update prices, please use the dedicated 
+    <a href="{% url 'medicine-price-update' view.object.pk %}" style="color: #2196F3; font-weight: bold;">Update Price</a> 
+    button. This ensures proper price change tracking and maintains data integrity.
+    
+    <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #ffcc80;">
+      <strong>Current Prices:</strong><br>
+      Base Price: <strong>₱{{ view.object.base_price|floatformat:2 }}</strong> | 
+      Selling Price: <strong>₱{{ view.object.selling_price|floatformat:2 }}</strong>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post">
+    {% csrf_token %}
+
+    <p><label for="id_name">Name:</label> {{ form.name }}</p>
+    <p><label for="id_brand">Brand:</label> {{ form.brand }}</p>
+    <p><label for="id_category">Category:</label> {{ form.category }}</p>
+    <p><label for="id_dosage_form">Dosage Form:</label> {{ form.dosage_form }}</p>
+    <p><label for="id_strength">Dosage Strength:</label> {{ form.strength }}</p>
+
+    <hr>
+    <h4>Packaging Details</h4>
+
+    <p><label for="id_units_per_pack">Pieces per Pack:</label> {{ form.units_per_pack }}</p>
+    <p><label for="id_packs_per_box">Packs per Box:</label> {{ form.packs_per_box }}</p>
+
+    {% if not is_update %}
+    <hr>
+    <h4>Pricing</h4>
+
+    <p><label for="id_base_price">Base Price (₱):</label> {{ form.base_price }}</p>
+    <p><label for="id_selling_price">Selling Price (₱):</label> {{ form.selling_price }}</p>
+    {% endif %}
+
+    <p><label for="id_description">Description:</label> {{ form.description }}</p>
+
+    <button type="submit" class="btn btn-success">Save</button>
+    <a href="{% url 'medicine-list' %}" class="btn btn-secondary">Cancel</a>
+    
+    {% if is_update and user.is_staff %}
+    <a href="{% url 'medicine-price-update' view.object.pk %}" class="btn" style="background: #2196F3; color: white;">💰 Update Price</a>
+    {% endif %}
+  </form>
+</div>
+{% endblock %}

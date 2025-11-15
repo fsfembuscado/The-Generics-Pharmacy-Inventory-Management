@@ -1,0 +1,35 @@
+{% extends 'dashboard/dashboard.html' %}
+{% block content %}
+<div class="container mt-4">
+  <h2>Refund #{{ refund.refund_id }}</h2>
+  <div class="card mb-3">
+    <div class="card-body">
+      <p><strong>Sale:</strong> #{{ refund.sale.sale_id }} (Invoice {{ refund.sale.invoice_number }})</p>
+      <p><strong>Date:</strong> {{ refund.refund_date|date:'Y-m-d H:i' }}</p>
+      <p><strong>Amount Refunded:</strong> ₱{{ refund.amount_refunded|floatformat:2 }}</p>
+      <p><strong>Reason:</strong> {{ refund.get_reason_display }}</p>
+      {% if refund.reason_details %}
+      <p><strong>Details:</strong> {{ refund.reason_details }}</p>
+      {% endif %}
+      <p><strong>Processed By:</strong> {{ refund.processed_by.username }}</p>
+      <p><strong>Status:</strong> {{ refund.status }}{% if refund.status == 'Pending' %} <span class="badge bg-warning">Awaiting Approval{% endif %}</span></p>
+      {% if refund.approved_by %}
+      <p><strong>Approved By:</strong> {{ refund.approved_by.username }} on {{ refund.approved_date|date:'Y-m-d H:i' }}</p>
+      {% endif %}
+      <p><strong>Payment Method:</strong> {{ refund.payment_method.method_name if refund.payment_method else 'N/A' }}</p>
+      {% if refund.reference_number %}
+      <p><strong>Reference #:</strong> {{ refund.reference_number }}</p>
+      {% endif %}
+    </div>
+  </div>
+  {% if refund.status == 'Pending' and user.is_authenticated %}
+    {% if user.is_superuser or user.employee_profile.get_primary_role.role_name == 'Manager' %}
+      <form method="post" action="{% url 'refund-approve' refund.pk %}">
+        {% csrf_token %}
+        <button class="btn btn-success">Approve Refund</button>
+      </form>
+    {% endif %}
+  {% endif %}
+  <a href="{% url 'refund-list' %}" class="btn btn-secondary">Back to list</a>
+</div>
+{% endblock %}

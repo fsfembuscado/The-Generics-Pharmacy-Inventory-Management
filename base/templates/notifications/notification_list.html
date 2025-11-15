@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'registration/sidebarstyles.css' %}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+        }
+        .container {
+            display: flex;
+        }
+        .main-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        h2 {
+            color: #1976d2;
+            margin: 0;
+            font-size: 28px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: #1976d2;
+            color: white;
+            box-shadow: 0 2px 4px rgba(25, 118, 210, 0.3);
+        }
+        .btn-primary:hover {
+            background: #1565c0;
+            box-shadow: 0 4px 8px rgba(25, 118, 210, 0.4);
+            transform: translateY(-1px);
+        }
+        .notification-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 5px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            transition: all 0.3s ease;
+        }
+        .notification-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(3px);
+        }
+        .notification-card.unread {
+            background: linear-gradient(to right, #e3f2fd, #ffffff);
+            border-left-color: #1976d2;
+        }
+        .notification-card.expiry {
+            border-left-color: #ff9800;
+        }
+        .notification-card.low_stock {
+            border-left-color: #f44336;
+        }
+        .notification-card.out_of_stock {
+            border-left-color: #d32f2f;
+        }
+        .notification-body {
+            flex: 1;
+        }
+        .notification-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .notification-icon {
+            font-size: 24px;
+        }
+        .notification-title {
+            font-weight: bold;
+            color: #333;
+            font-size: 16px;
+        }
+        .notification-type {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 10px;
+            text-transform: uppercase;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .type-expiry {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffb74d;
+        }
+        .type-low_stock {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef5350;
+        }
+        .type-out_of_stock {
+            background: #ffcdd2;
+            color: #b71c1c;
+            border: 1px solid #e53935;
+        }
+        .notification-message {
+            color: #555;
+            line-height: 1.6;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+        .notification-time {
+            font-size: 12px;
+            color: #999;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .notification-time::before {
+            content: "🕒";
+        }
+        .notification-actions-btns {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+            min-width: 100px;
+        }
+        .btn-small {
+            padding: 8px 14px;
+            font-size: 12px;
+            text-decoration: none;
+            border-radius: 6px;
+            text-align: center;
+            white-space: nowrap;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-read {
+            background: #4caf50;
+            color: white;
+        }
+        .btn-read:hover {
+            background: #388e3c;
+            transform: scale(1.05);
+        }
+        .btn-delete {
+            background: #f44336;
+            color: white;
+        }
+        .btn-delete:hover {
+            background: #d32f2f;
+            transform: scale(1.05);
+        }
+        .no-notifications {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .no-notifications p:first-child {
+            font-size: 48px;
+            margin: 0 0 10px 0;
+        }
+        .no-notifications p:last-child {
+            color: #999;
+            font-size: 16px;
+            margin: 0;
+        }
+        .unread-badge {
+            background: linear-gradient(135deg, #f44336, #e91e63);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(244, 67, 54, 0.3);
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% include 'shared/sidebar.html' %}
+    
+    <div class="main-content">
+        <div class="page-header">
+            <h2>
+                🔔 Notifications
+                {% if unread_count > 0 %}
+                    <span class="unread-badge">{{ unread_count }} Unread</span>
+                {% endif %}
+            </h2>
+            {% if unread_count > 0 %}
+                <a href="{% url 'notification-mark-all-read' %}" class="btn btn-primary">✓ Mark All as Read</a>
+            {% endif %}
+        </div>
+        
+        {% if notifications %}
+            {% for notification in notifications %}
+                <div class="notification-card {% if not notification.is_read %}unread{% endif %} {{ notification.notification_type }}">
+                    <div class="notification-body">
+                        <div class="notification-header">
+                            <span class="notification-icon">
+                                {% if notification.notification_type == 'expiry' %}⚠️
+                                {% elif notification.notification_type == 'low_stock' %}📦
+                                {% elif notification.notification_type == 'out_of_stock' %}🚫
+                                {% endif %}
+                            </span>
+                            <span class="notification-title">{{ notification.title }}</span>
+                            <span class="notification-type type-{{ notification.notification_type }}">
+                                {{ notification.get_notification_type_display }}
+                            </span>
+                        </div>
+                        <div class="notification-message">
+                            {{ notification.message }}
+                        </div>
+                        <div class="notification-time">
+                            {{ notification.created_at|date:"F d, Y g:i A" }}
+                        </div>
+                    </div>
+                    <div class="notification-actions-btns">
+                        {% if not notification.is_read %}
+                            <a href="{% url 'notification-mark-read' notification.notification_id %}" class="btn-small btn-read">
+                                ✓ Mark Read
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'notification-delete' notification.notification_id %}" 
+                           class="btn-small btn-delete"
+                           onclick="return confirm('Delete this notification?')">
+                            ✕ Delete
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-notifications">
+                <p>📭 No notifications</p>
+                <p style="font-size: 14px;">You're all caught up!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleSidebar() {
+    document.getElementById("sidebar").classList.toggle("collapsed");
+}
+
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    const dropdownLi = dropdown.parentElement;
+    dropdown.classList.toggle('open');
+    dropdownLi.classList.toggle('open');
+}
+</script>
+</body>
+</html>

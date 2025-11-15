@@ -6,6 +6,7 @@
     <title>TGP Register</title>
 
     {% load static %}
+    <link rel="stylesheet" href="{% static 'landingpage/navigationbarlanding.css' %}">
     <link rel="stylesheet" href="{% static 'registration/loginstyles.css' %}">
 </head>
 <body>
@@ -25,8 +26,7 @@
 
         <a href="{% url 'login' %}" class="login-btn">LOGIN</a>
     </header>
-
-    <!-- Signup Box -->
+<!-- Signup Box -->
     <div class="login-container">
         <div class="login-box">
             <div class="logo">
@@ -48,6 +48,25 @@
 
                 <label for="password2">Confirm Password:</label>
                 <input type="password" name="password2" required>
+
+                <!-- ✅ Show actual form errors or messages -->
+                {% if form.errors %}
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <p style="color: red; font-size: 14px; margin-top: 5px;">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <p style="color: red; font-size: 14px; margin-top: 5px;">
+                            {{ message }}
+                        </p>
+                    {% endfor %}
+                {% endif %}
 
                 <button type="submit" class="login-btn-submit">SIGN UP</button>
             </form>

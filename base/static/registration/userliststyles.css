@@ -138,7 +138,8 @@ table {
 }
 
 thead {
-    background: #f0f0f0;
+    background: #e53935;
+    color: #fff;
 }
 
 th, td {
