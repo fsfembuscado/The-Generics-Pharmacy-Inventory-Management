@@ -110,10 +110,6 @@
             </ul>
         </li>
 
-        <!-- Notifications -->
-        <li class="{% if request.resolver_match.url_name == 'notification-list' %}active{% endif %}">
-            <a href="{% url 'notification-list' %}">Notifications</a>
-        </li>
 
         <li>
             <form method="POST" action="{% url 'logout' %}" style="display:inline;">
