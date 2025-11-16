@@ -2274,20 +2274,48 @@ class ActualInventoryView(LoginRequiredMixin, ListView):
         user = self.request.user
         context["is_manager_or_admin"] = is_manager_or_admin(user)
         
-        # Calculate totals
-        batches = context['inventory_items']
+        # Get status filter
+        status_filter = self.request.GET.get('status', 'all')
+        context['status_filter'] = status_filter
+        
+        # Calculate totals and filter by status
+        all_batches = context['inventory_items']
         total_value = Decimal('0.00')
         total_items = 0
+        low_stock_count = 0
+        medium_stock_count = 0
+        in_stock_count = 0
         
-        for batch in batches:
+        # Filter batches by status if needed
+        filtered_batches = []
+        for batch in all_batches:
             total_pieces = batch.total_pieces
             value = total_pieces * (batch.medicine.selling_price or 0)
             total_value += value
             total_items += total_pieces
+            
+            # Determine status
+            if total_pieces < 50:
+                batch_status = 'low'
+                low_stock_count += 1
+            elif total_pieces < 200:
+                batch_status = 'medium'
+                medium_stock_count += 1
+            else:
+                batch_status = 'good'
+                in_stock_count += 1
+            
+            # Apply filter
+            if status_filter == 'all' or status_filter == batch_status:
+                filtered_batches.append(batch)
         
+        context['inventory_items'] = filtered_batches
         context['total_value'] = total_value
         context['total_items'] = total_items
         context['search'] = self.request.GET.get('search', '')
+        context['low_stock_count'] = low_stock_count
+        context['medium_stock_count'] = medium_stock_count
+        context['in_stock_count'] = in_stock_count
         
         return context
 

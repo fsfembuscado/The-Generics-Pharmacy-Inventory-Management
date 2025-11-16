@@ -95,6 +95,35 @@
         .info-box strong {
             color: #1976D2;
         }
+        .filter-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .filter-tabs a {
+            padding: 12px 24px;
+            background: #e0e0e0;
+            color: #333;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        .filter-tabs a:hover {
+            background: #bdbdbd;
+        }
+        .filter-tabs a.active {
+            background: #2196F3;
+            color: white;
+        }
+        .filter-tabs .badge {
+            display: inline-block;
+            background: rgba(0,0,0,0.15);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.85em;
+            margin-left: 5px;
+        }
     </style>
 </head>
 <body>
@@ -120,6 +149,13 @@
                 <div class="value">{{ inventory_items|length }}</div>
                 <small>different batches</small>
             </div>
+        </div>
+
+        <div class="filter-tabs">
+            <a href="?status=all{% if search %}&search={{ search }}{% endif %}" {% if status_filter == 'all' %}class="active"{% endif %}>All <span class="badge">{{ low_stock_count|add:medium_stock_count|add:in_stock_count }}</span></a>
+            <a href="?status=low{% if search %}&search={{ search }}{% endif %}" {% if status_filter == 'low' %}class="active"{% endif %}>Low Stock <span class="badge">{{ low_stock_count }}</span></a>
+            <a href="?status=medium{% if search %}&search={{ search }}{% endif %}" {% if status_filter == 'medium' %}class="active"{% endif %}>Medium <span class="badge">{{ medium_stock_count }}</span></a>
+            <a href="?status=good{% if search %}&search={{ search }}{% endif %}" {% if status_filter == 'good' %}class="active"{% endif %}>In Stock <span class="badge">{{ in_stock_count }}</span></a>
         </div>
 
         <div class="search-form">
