@@ -158,8 +158,6 @@
                         <th>Medicine Name</th>
                         <th style="width: 8%;">Batch ID</th>
                         <th style="width: 10%;">Location</th>
-                        <th class="right-align" style="width: 10%;">Quantity (Boxes)</th>
-                        <th class="right-align" style="width: 10%;">Total Pieces</th>
                         <th style="width: 11%;">Received Date</th>
                         <th style="width: 11%;">Expiry Date</th>
                         <th style="width: 12%;">Days Until Expiry</th>
@@ -181,8 +179,6 @@
                         </td>
                         <td>#{{ batch.id }}</td>
                         <td>{{ batch.get_location_display }}</td>
-                        <td class="right-align">{{ batch.quantity }}</td>
-                        <td class="right-align"><strong>{{ final_total|default:0 }}</strong></td>
                         <td>{{ batch.date_received|date:"M d, Y" }}</td>
                         <td>{{ batch.expiry_date|date:"M d, Y" }}</td>
                         <td>
@@ -214,7 +210,7 @@
                     {% endwith %}
                     {% empty %}
                     <tr>
-                        <td colspan="10" style="text-align: center; padding: 40px; color: #999;">No batches found.</td>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: #999;">No batches found.</td>
                     </tr>
                     {% endfor %}
                 </tbody>
