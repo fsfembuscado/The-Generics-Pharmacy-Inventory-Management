@@ -110,6 +110,22 @@
             </ul>
         </li>
 
+        <!-- Account (Staff Only) -->
+        {% if not is_manager_or_admin %}
+        <li class="dropdown {% if request.resolver_match.url_name == 'update-account' or request.resolver_match.url_name == 'update-password' %}open{% endif %}">
+            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-account')">
+                Account
+            </a>
+            <ul id="dropdown-account" class="dropdown-menu {% if request.resolver_match.url_name == 'update-account' or request.resolver_match.url_name == 'update-password' %}open{% endif %}">
+                <li class="{% if request.resolver_match.url_name == 'update-account' %}active{% endif %}">
+                    <a href="{% url 'update-account' %}">Update Account</a>
+                </li>
+                <li class="{% if request.resolver_match.url_name == 'update-password' %}active{% endif %}">
+                    <a href="{% url 'update-password' %}">Update Password</a>
+                </li>
+            </ul>
+        </li>
+        {% endif %}
 
         <li>
             <form method="POST" action="{% url 'logout' %}" style="display:inline;">
