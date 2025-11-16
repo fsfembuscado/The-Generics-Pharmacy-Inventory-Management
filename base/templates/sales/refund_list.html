@@ -77,6 +77,22 @@
         .btn-view:hover {
             background: #c62828;
         }
+        /* Modal Styles */
+        /* Modal Styles (consistent with existing site modals) */
+        .modal-overlay {position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:1200;}
+        .hidden {display:none;}
+        .modal-box {background:#ffffff; width:620px; max-width:95%; border-radius:8px; box-shadow:0 6px 18px rgba(0,0,0,.3); overflow:hidden; font-size:14px;}
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 20px; }
+        .modal-grid label { display:flex; flex-direction:column; font-weight:500; }
+        .modal-grid label.full-width { grid-column:1 / -1; }
+        .modal-grid input, .modal-grid select, .modal-grid textarea { margin-top:5px; padding:8px; border:1px solid #ddd; border-radius:4px; }
+        .modal-actions { display:flex; gap:10px; justify-content:flex-end; padding:0 20px 20px; }
+        .btn-cancel {background:#777; color:#fff; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:13px;}
+        .btn-cancel:hover {background:#5c5c5c;}
+        .btn-submit {background:#e53935; color:#fff; padding:10px 20px; border:none; border-radius:4px; cursor:pointer; font-size:14px;}
+        .btn-submit:hover {background:#c62828;}
+        .error-list .err {background:#ffebee; color:#c62828; padding:8px 10px; border-radius:4px; margin:0 20px 10px; border:1px solid #ffcdd2;}
+        .modal-box h3 {margin:0; padding:20px 20px 10px;}
     </style>
 </head>
 <body>
@@ -102,15 +118,15 @@
         <div class="summary-card">
             <div class="summary-item">
                 <label>Total Refunds</label>
-                <div class="value">{{ total_refunds }}</div>
+                <div class="value" id="totalRefunds">{{ total_refunds }}</div>
             </div>
             <div class="summary-item">
                 <label>Pending</label>
-                <div class="value" style="color: #f57f17;">{{ pending_count }}</div>
+                <div class="value" id="pendingCount" style="color: #f57f17;">{{ pending_count }}</div>
             </div>
             <div class="summary-item">
                 <label>Approved</label>
-                <div class="value" style="color: #2e7d32;">{{ approved_count }}</div>
+                <div class="value" id="approvedCount" style="color: #2e7d32;">{{ approved_count }}</div>
             </div>
         </div>
 
@@ -119,7 +135,7 @@
                 <input type="text" name="search" placeholder="Search refunds..." value="{{ request.GET.search }}" style="flex: 1;">
                 <button type="submit">Search</button>
             </form>
-            <a href="{% url 'refund-create' %}" class="btn-create">+ New Refund</a>
+            <button type="button" class="btn-create" onclick="openRefundModal()">+ New Refund</button>
         </div>
 
         <div class="table-container">
@@ -137,7 +153,7 @@
                 </thead>
                 <tbody>
                     {% for r in refunds %}
-                    <tr>
+                    <tr data-refund-id="{{ r.refund_id }}">
                         <td><strong>#{{ r.refund_id }}</strong></td>
                         <td>#{{ r.sale.sale_id }}</td>
                         <td>
@@ -145,10 +161,25 @@
                             <small style="display: block; color: #666;">{{ r.refund_date|date:"g:i A" }}</small>
                         </td>
                         <td><strong>₱{{ r.amount_refunded|floatformat:2 }}</strong></td>
-                        <td>{{ r.get_reason_display }}</td>
-                        <td>{{ r.processed_by.username }}</td>
                         <td>
-                            <a href="{% url 'refund-detail' r.pk %}" class="btn-view">View</a>
+                            {{ r.get_reason_display }}<br>
+                            <span class="status-badge {% if r.status == 'Pending' %}status-pending{% elif r.status == 'Approved' %}status-approved{% else %}status-rejected{% endif %}">{{ r.status }}</span>
+                        </td>
+                        <td>{{ r.processed_by.username }}</td>
+                        <td style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn-view" onclick="openRefundDetailModal({{ r.refund_id }})">View</button>
+                            <!-- Dynamic Refund Detail Modal Container -->
+                            <div id="dynamicModal" class="modal-overlay hidden">
+                                <div class="modal-box" id="dynamicModalContent" style="width:640px; max-width:95%; border-radius:8px; background:#fff; box-shadow:0 6px 18px rgba(0,0,0,.3);">
+                                    <!-- Injected content -->
+                                </div>
+                            </div>
+                            {% if r.status == 'Pending' and is_manager_or_admin %}
+                            <form method="post" action="{% url 'refund-approve' r.pk %}" class="approve-refund-form" data-refund-id="{{ r.refund_id }}" style="margin:0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn-view" style="background:#4caf50;">Approve</button>
+                            </form>
+                            {% endif %}
                         </td>
                     </tr>
                     {% empty %}
@@ -164,9 +195,164 @@
     </div>
 </div>
 
+<!-- Refund Modal -->
+<div id="refundModal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <form id="refundForm" method="post" action="{% url 'refund-create' %}">
+            {% csrf_token %}
+            <h3>Create Refund</h3>
+            <div id="refundErrors" class="error-list hidden"></div>
+            <div class="modal-grid">
+                <label class="full-width">Sale {{ refund_form.sale }}</label>
+                <label>Reason {{ refund_form.reason }}</label>
+                <label class="full-width">Details (optional) {{ refund_form.reason_details }}</label>
+                <label>Refund Method (optional) {{ refund_form.payment_method }}</label>
+                <label>Reference Number (optional) {{ refund_form.reference_number }}</label>
+                <label class="full-width" style="flex-direction:row; align-items:center; gap:8px;">
+                    {{ refund_form.confirm_full_refund }} <span><strong>Confirm full refund of sale amount</strong></span>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button type="submit" class="btn-submit">Process Refund</button>
+                <button type="button" class="btn-cancel" onclick="closeRefundModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function toggleSidebar() {
         document.getElementById("sidebar").classList.toggle("collapsed");
+    }
+
+    function openRefundModal(){
+        document.getElementById('refundModal').classList.remove('hidden');
+    }
+    function closeRefundModal(){
+        document.getElementById('refundModal').classList.add('hidden');
+    }
+
+    function openRefundDetailModal(refundId){
+        fetch(`/refunds/${refundId}/modal/`, {headers:{'X-Requested-With':'XMLHttpRequest'}})
+            .then(r=>r.json())
+            .then(data=>{
+                if(data.success){
+                    const content = document.getElementById('dynamicModalContent');
+                    content.innerHTML = data.html;
+                    document.getElementById('dynamicModal').classList.remove('hidden');
+                    bindApproveForms(content);
+                }
+            }).catch(err=>console.error(err));
+    }
+    function closeDynamicModal(){
+        document.getElementById('dynamicModal').classList.add('hidden');
+        document.getElementById('dynamicModalContent').innerHTML='';
+    }
+
+    const refundForm = document.getElementById('refundForm');
+    if(refundForm){
+        refundForm.addEventListener('submit', function(e){
+            e.preventDefault();
+            const form = this;
+            const url = form.action;
+            const formData = new FormData(form);
+            fetch(url, {
+                method: 'POST',
+                headers: {'X-Requested-With': 'XMLHttpRequest'},
+                body: formData
+            }).then(r => r.json()).then(data => {
+                if(data.success){
+                    closeRefundModal();
+                    window.location.reload();
+                } else if(data.errors){
+                    const box = document.getElementById('refundErrors');
+                    let html = '';
+                    for(const [field, msgs] of Object.entries(data.errors)){
+                        html += `<div class="err"><strong>${field}:</strong> ${msgs.join(', ')}</div>`;
+                    }
+                    box.innerHTML = html;
+                    box.classList.remove('hidden');
+                }
+            }).catch(err => console.error(err));
+        });
+    }
+
+    // AJAX approve handling
+    function bindApproveForms(scope){
+        scope.querySelectorAll('.approve-refund-form').forEach(f => {
+            f.addEventListener('submit', approveHandler);
+        });
+    }
+    function approveHandler(e){
+        e.preventDefault();
+        const form = this;
+        const url = form.action;
+        const formData = new FormData(form);
+        fetch(url, {
+            method:'POST',
+            headers:{'X-Requested-With':'XMLHttpRequest'},
+            body: formData
+        }).then(r=>r.json()).then(data=>{
+            if(data.success){
+                const pendingEl = document.getElementById('pendingCount');
+                const approvedEl = document.getElementById('approvedCount');
+                if(pendingEl){
+                    const val = parseInt(pendingEl.textContent.trim());
+                    if(val>0) pendingEl.textContent = (val-1).toString();
+                }
+                if(approvedEl){
+                    approvedEl.textContent = (parseInt(approvedEl.textContent.trim()) + 1).toString();
+                }
+                const row = document.querySelector(`tr[data-refund-id='${data.refund_id}']`);
+                if(row){
+                    const badge = row.querySelector('.status-badge');
+                    if(badge){
+                        badge.classList.remove('status-pending');
+                        badge.classList.add('status-approved');
+                        badge.textContent = 'Approved';
+                    }
+                    const approveForm = row.querySelector('form.approve-refund-form');
+                    if(approveForm){ approveForm.remove(); }
+                }
+                showInlineMessage(`Refund #${data.refund_id} approved.`,'success');
+                // If inside modal, update modal status badge and remove button
+                if(form.closest('#dynamicModalContent')){
+                    form.remove();
+                    const modalBadge = form.closest('#dynamicModalContent').querySelector('.badge-warning');
+                    if(modalBadge){
+                        modalBadge.classList.remove('badge-warning');
+                        modalBadge.classList.add('badge-success');
+                        modalBadge.textContent='Approved';
+                    }
+                }
+            } else {
+                showInlineMessage(data.error || 'Approval failed.','error');
+            }
+        }).catch(err => {
+            console.error(err);
+            showInlineMessage('Network error approving refund.','error');
+        });
+    }
+    // Initial binding for forms in table
+    bindApproveForms(document);
+
+    function showInlineMessage(msg,type){
+        let box = document.getElementById('inlineMessages');
+        if(!box){
+            box = document.createElement('div');
+            box.id='inlineMessages';
+            box.style.margin='15px 0';
+            document.querySelector('.main-content h2').after(box);
+        }
+        const div = document.createElement('div');
+        div.textContent = msg;
+        div.style.padding='10px';
+        div.style.borderRadius='4px';
+        div.style.marginBottom='8px';
+        if(type==='success'){div.style.background='#d4edda'; div.style.color='#155724';}
+        else {div.style.background='#f8d7da'; div.style.color='#721c24';}
+        box.appendChild(div);
+        setTimeout(()=>{div.remove();},4000);
     }
 
     function toggleDropdown(id) {

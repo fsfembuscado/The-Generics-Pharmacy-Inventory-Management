@@ -1,0 +1,39 @@
+<style>
+.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 20px; }
+.modal-grid label { display:flex; flex-direction:column; font-weight:500; }
+.modal-grid label.full-width { grid-column:1 / -1; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; padding:0 20px 20px; }
+.badge { display:inline-block; padding:4px 8px; border-radius:4px; font-size:12px; }
+.badge-warning { background:#fff3cd; color:#856404; }
+.badge-success { background:#d4edda; color:#155724; }
+</style>
+<form method="post" id="refund-detail-form">
+  <h3 style="margin:0; padding:20px 20px 10px;">Refund #{{ refund.refund_id }}</h3>
+  <div class="modal-grid">
+    <label class="full-width">Sale # {{ refund.sale.sale_id }}</label>
+    <label>Date <span style="margin-top:5px;">{{ refund.refund_date|date:'Y-m-d H:i' }}</span></label>
+    <label>Amount Refunded <span style="margin-top:5px;">₱{{ refund.amount_refunded|floatformat:2 }}</span></label>
+    <label>Reason <span style="margin-top:5px;">{{ refund.get_reason_display }}</span></label>
+    {% if refund.reason_details %}
+    <label class="full-width">Details <span style="margin-top:5px;">{{ refund.reason_details }}</span></label>
+    {% endif %}
+    <label>Processed By <span style="margin-top:5px;">{{ refund.processed_by.username }}</span></label>
+    <label>Status <span style="margin-top:5px;">{{ refund.status }} {% if refund.status == 'Pending' %}<span class="badge badge-warning">Awaiting Approval</span>{% elif refund.status == 'Approved' %}<span class="badge badge-success">Approved</span>{% endif %}</span></label>
+    <label>Payment Method <span style="margin-top:5px;">{% if refund.payment_method %}{{ refund.payment_method.method_name }}{% else %}N/A{% endif %}</span></label>
+    {% if refund.reference_number %}
+    <label>Reference # <span style="margin-top:5px;">{{ refund.reference_number }}</span></label>
+    {% endif %}
+    {% if refund.approved_by %}
+    <label>Approved By <span style="margin-top:5px;">{{ refund.approved_by.username }} on {{ refund.approved_date|date:'Y-m-d H:i' }}</span></label>
+    {% endif %}
+  </div>
+  <div class="modal-actions">
+    {% if refund.status == 'Pending' and is_manager_or_admin %}
+    <form method="post" action="{% url 'refund-approve' refund.pk %}" class="approve-refund-form" data-refund-id="{{ refund.refund_id }}" style="margin:0;">
+      {% csrf_token %}
+      <button type="submit" class="btn-view" style="background:#4caf50; color:#fff; border:none; padding:8px 16px; border-radius:4px; cursor:pointer;">Approve</button>
+    </form>
+    {% endif %}
+    <button type="button" class="btn-cancel" onclick="closeDynamicModal()" style="background:#777;color:#fff;border:none;padding:8px 16px;border-radius:4px;cursor:pointer;">Close</button>
+  </div>
+</form>

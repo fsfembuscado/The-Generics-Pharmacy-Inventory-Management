@@ -9,7 +9,12 @@ from django.shortcuts import redirect, get_object_or_404
 from django.db.models import Q
 
 class RefundCreateForm(forms.Form):
-    sale = forms.ModelChoiceField(queryset=Sale.objects.order_by('-sale_id')[:50], label="Sale", help_text="Select recent sale to refund")
+    # Only allow sales that have no existing refunds
+    sale = forms.ModelChoiceField(
+        queryset=Sale.objects.filter(refunds__isnull=True).order_by('-sale_id'),
+        label="Sale",
+        help_text="Select sale to refund (unrefunded only)"
+    )
     reason = forms.ChoiceField(choices=[
         ('expired', 'Expired Product'),
         ('damaged', 'Damaged Product'),
@@ -36,6 +41,10 @@ class RefundCreateView(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         sale = form.cleaned_data['sale']
+        # Guard against race condition or stale queryset allowing duplicate refund
+        if Refund.objects.filter(sale=sale).exists():
+            form.add_error('sale', 'This sale already has a refund.')
+            return self.form_invalid(form)
         reason = form.cleaned_data['reason']
         reason_details = form.cleaned_data.get('reason_details')
         payment_method = form.cleaned_data.get('payment_method') or sale.payment_method
@@ -66,9 +75,8 @@ class RefundCreateView(LoginRequiredMixin, FormView):
                     user=self.request.user
                 )
 
-        # Determine initial status (Pending if exceeds threshold)
-        APPROVAL_THRESHOLD = 1000  # currency units; adjust as needed
-        status = 'Pending' if amount >= APPROVAL_THRESHOLD and not is_manager_or_admin(self.request.user) else 'Approved'
+        # All new refunds start as Pending; require explicit approval
+        status = 'Pending'
         refund = Refund.objects.create(
             sale=sale,
             amount_refunded=amount,
@@ -78,13 +86,27 @@ class RefundCreateView(LoginRequiredMixin, FormView):
             payment_method=payment_method,
             reference_number=reference_number,
             status=status,
-            approved_by=self.request.user if status == 'Approved' else None,
-            approved_date=timezone.now() if status == 'Approved' else None
+            approved_by=None,
+            approved_date=None
         )
 
         log_activity(self.request.user, f"Processed refund #{refund.refund_id} for Sale #{sale.sale_id} amount ₱{amount}")
-        messages.success(self.request, f"Refund processed. Restored {restored_total} units to inventory.")
+        messages.success(self.request, f"Refund submitted and marked Pending. Restored {restored_total} units to inventory.")
+
+        # AJAX response
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'refund_id': refund.refund_id,
+                'status': refund.status,
+                'message': f"Refund processed. Restored {restored_total} units to inventory.",
+            })
         return super().form_valid(form)
+
+    def form_invalid(self, form):
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest' or self.request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': False, 'errors': form.errors}, status=400)
+        return super().form_invalid(form)
 
 class RefundListView(LoginRequiredMixin, ListView):
     model = Refund
@@ -100,6 +122,7 @@ class RefundListView(LoginRequiredMixin, ListView):
         # Add recent sales and payment methods for the modal
         ctx['recent_sales'] = Sale.objects.order_by('-sale_id')[:50]
         ctx['payment_methods'] = PaymentMethod.objects.filter(is_active=True)
+        ctx['refund_form'] = RefundCreateForm()
         ctx['is_manager_or_admin'] = is_manager_or_admin(self.request.user)
         ctx['user_role'] = get_user_role_display(self.request.user)
         return ctx
@@ -116,17 +139,32 @@ class RefundDetailView(LoginRequiredMixin, DetailView):
         ctx['user_role'] = get_user_role_display(self.request.user)
         return ctx
 
+def refund_detail_modal(request, pk):
+    refund = get_object_or_404(Refund, pk=pk)
+    ctx = {
+        'refund': refund,
+        'is_manager_or_admin': is_manager_or_admin(request.user),
+    }
+    html = render_to_string('sales/partials/refund_detail_modal.html', ctx, request=request)
+    return JsonResponse({'success': True, 'html': html})
+
 class RefundApproveView(LoginRequiredMixin, View):
     def post(self, request, pk):
         refund = get_object_or_404(Refund, pk=pk, status='Pending')
         if not is_manager_or_admin(request.user):
-            return JsonResponse({'error': 'Not authorized'}, status=403)
+            # AJAX or standard form: return JSON if XHR
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+                return JsonResponse({'success': False, 'error': 'Not authorized'}, status=403)
+            messages.error(request, 'Not authorized to approve refunds.')
+            return redirect('refund-detail', pk=refund.pk)
         refund.status = 'Approved'
         refund.approved_by = request.user
         refund.approved_date = timezone.now()
         refund.save(update_fields=['status', 'approved_by', 'approved_date'])
         log_activity(request.user, f"Approved refund #{refund.refund_id}")
         messages.success(request, f"Refund #{refund.refund_id} approved.")
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            return JsonResponse({'success': True, 'refund_id': refund.refund_id, 'status': 'Approved'})
         return redirect('refund-detail', pk=refund.pk)
 from django import forms
 from django.shortcuts import render, redirect, get_object_or_404

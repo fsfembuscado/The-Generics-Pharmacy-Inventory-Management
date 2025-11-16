@@ -57,6 +57,7 @@ urlpatterns = [
     path("refunds/", RefundListView.as_view(), name="refund-list"),
     path("refunds/new/", RefundCreateView.as_view(), name="refund-create"),
     path("refunds/<int:pk>/", RefundDetailView.as_view(), name="refund-detail"),
+    path("refunds/<int:pk>/modal/", views.refund_detail_modal, name="refund-detail-modal"),
     path("refunds/<int:pk>/approve/", RefundApproveView.as_view(), name="refund-approve"),
     path("report/", SalesReportView.as_view(), name="sales-report"),
     path('process-expired-stock/', process_expired_stock_view, name='process_expired_stock'),
