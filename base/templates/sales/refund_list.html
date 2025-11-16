@@ -77,123 +77,6 @@
         .btn-view:hover {
             background: #c62828;
         }
-        
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            overflow-y: auto;
-        }
-        .modal-content {
-            background-color: white;
-            margin: 50px auto;
-            padding: 30px;
-            border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #eee;
-        }
-        .modal-header h3 {
-            margin: 0;
-            color: #333;
-        }
-        .close-modal {
-            font-size: 28px;
-            font-weight: bold;
-            color: #999;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            line-height: 1;
-        }
-        .close-modal:hover {
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #555;
-        }
-        .form-group select,
-        .form-group input[type="text"],
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-        .form-group small {
-            display: block;
-            margin-top: 5px;
-            color: #666;
-            font-size: 12px;
-        }
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .checkbox-group input[type="checkbox"] {
-            width: auto;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        .btn-modal-submit {
-            background: #e53935;
-            color: white;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .btn-modal-submit:hover {
-            background: #c62828;
-        }
-        .btn-modal-cancel {
-            background: #999;
-            color: white;
-            padding: 10px 25px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .btn-modal-cancel:hover {
-            background: #777;
-        }
     </style>
 </head>
 <body>
@@ -236,7 +119,7 @@
                 <input type="text" name="search" placeholder="Search refunds..." value="{{ request.GET.search }}" style="flex: 1;">
                 <button type="submit">Search</button>
             </form>
-            <button onclick="openRefundModal()" class="btn-create">+ New Refund</button>
+            <a href="{% url 'refund-create' %}" class="btn-create">+ New Refund</a>
         </div>
 
         <div class="table-container">
@@ -281,81 +164,6 @@
     </div>
 </div>
 
-<!-- Refund Modal -->
-<div id="refundModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3>Create New Refund</h3>
-            <button class="close-modal" onclick="closeRefundModal()">&times;</button>
-        </div>
-        
-        <form method="post" action="{% url 'refund-create' %}" id="refundForm">
-            {% csrf_token %}
-            
-            <div class="form-group">
-                <label for="id_sale">Sale *</label>
-                <select name="sale" id="id_sale" required>
-                    <option value="">-- Select a sale --</option>
-                    {% for sale in recent_sales %}
-                        <option value="{{ sale.sale_id }}">
-                            Sale #{{ sale.sale_id }} - ₱{{ sale.final_amount|floatformat:2 }} 
-                            ({{ sale.sale_date|date:"M d, Y" }})
-                        </option>
-                    {% endfor %}
-                </select>
-                <small>Select recent sale to refund</small>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_reason">Reason *</label>
-                <select name="reason" id="id_reason" required>
-                    <option value="">-- Select reason --</option>
-                    <option value="expired">Expired Product</option>
-                    <option value="damaged">Damaged Product</option>
-                    <option value="wrong_item">Wrong Item Sold</option>
-                    <option value="customer_request">Customer Request</option>
-                    <option value="overcharge">Overcharge/Pricing Error</option>
-                    <option value="other">Other Reason</option>
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_reason_details">Details</label>
-                <textarea name="reason_details" id="id_reason_details" placeholder="Optional additional details..."></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_payment_method">Refund Method</label>
-                <select name="payment_method" id="id_payment_method">
-                    <option value="">-- Use original payment method --</option>
-                    {% for method in payment_methods %}
-                        <option value="{{ method.method_id }}">{{ method.method_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div class="form-group">
-                <label for="id_reference_number">Reference Number</label>
-                <input type="text" name="reference_number" id="id_reference_number" placeholder="Optional reference number">
-            </div>
-            
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox" name="confirm_full_refund" id="id_confirm_full_refund" required>
-                    <label for="id_confirm_full_refund" style="margin-bottom: 0;">
-                        Confirm full refund of sale amount *
-                    </label>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button type="button" class="btn-modal-cancel" onclick="closeRefundModal()">Cancel</button>
-                <button type="submit" class="btn-modal-submit">Create Refund</button>
-            </div>
-        </form>
-    </div>
-</div>
-
 <script>
     function toggleSidebar() {
         document.getElementById("sidebar").classList.toggle("collapsed");
@@ -368,23 +176,6 @@
         // Toggle the 'open' class on both the dropdown menu and the parent li
         dropdown.classList.toggle('open');
         dropdownLi.classList.toggle('open');
-    }
-    
-    function openRefundModal() {
-        document.getElementById('refundModal').style.display = 'block';
-    }
-    
-    function closeRefundModal() {
-        document.getElementById('refundModal').style.display = 'none';
-        document.getElementById('refundForm').reset();
-    }
-    
-    // Close modal when clicking outside
-    window.onclick = function(event) {
-        const modal = document.getElementById('refundModal');
-        if (event.target === modal) {
-            closeRefundModal();
-        }
     }
 </script>
 </body>
