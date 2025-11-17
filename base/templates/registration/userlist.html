@@ -272,15 +272,15 @@
             {% csrf_token %}
             <div class="form-group">
                 <label>Username *</label>
-                <input type="text" name="username" required>
+                <input type="text" name="username" placeholder="Enter username" required>
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email">
+                <input type="email" name="email" placeholder="Enter email address (optional)">
             </div>
             <div class="form-group">
                 <label>Password *</label>
-                <input type="password" name="password" required>
+                <input type="password" name="password" placeholder="Enter password" required>
             </div>
             <div class="form-group">
                 <label>Role Designation</label>
@@ -317,11 +317,11 @@
             <input type="hidden" name="user_id" id="edit_user_id">
             <div class="form-group">
                 <label>Username *</label>
-                <input type="text" name="username" id="edit_username" required>
+                <input type="text" name="username" id="edit_username" placeholder="Enter username" required>
             </div>
             <div class="form-group">
                 <label>Email</label>
-                <input type="email" name="email" id="edit_email">
+                <input type="email" name="email" id="edit_email" placeholder="Enter email address (optional)">
             </div>
             <div class="form-group">
                 <label>Role Designation</label>
@@ -356,11 +356,11 @@
             <input type="hidden" name="user_id" id="password_user_id">
             <div class="form-group">
                 <label>New Password *</label>
-                <input type="password" name="new_password" id="new_password" required>
+                <input type="password" name="new_password" id="new_password" placeholder="Enter new password" required>
             </div>
             <div class="form-group">
                 <label>Confirm Password *</label>
-                <input type="password" name="confirm_password" id="confirm_password" required>
+                <input type="password" name="confirm_password" id="confirm_password" placeholder="Re-enter password" required>
             </div>
             <div id="passwordError" class="error-message" style="display: none;"></div>
             <div style="margin-top: 20px;">

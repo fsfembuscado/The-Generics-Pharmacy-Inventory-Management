@@ -85,6 +85,25 @@
         .status-ok {
             color: #388e3c;
         }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-expired {
+            background: #d32f2f;
+            color: white;
+        }
+        .status-near-expiry {
+            background: #ffa000;
+            color: white;
+        }
+        .status-good {
+            background: #388e3c;
+            color: white;
+        }
         .info-box {
             margin-top: 30px;
             padding: 15px;
@@ -193,22 +212,28 @@
                     <td class="right-align">{{ total_pieces|default:0 }}</td>
                     <td>
                         {{ batch.expiry_date|date:"M d, Y" }}
-                        {% if batch.expiry_date %}
-                            {% now "Y-m-d" as today_str %}
-                            {% if batch.expiry_date|date:"Y-m-d" < today_str %}
-                                <br><small class="alert-low">EXPIRED</small>
-                            {% endif %}
-                        {% endif %}
                     </td>
                     <td class="right-align">₱{{ batch.medicine.selling_price|floatformat:2 }}</td>
                     <td class="right-align">₱{{ batch_value|floatformat:2 }}</td>
                     <td>
+                        <!-- Stock Status -->
                         {% if total_pieces < 50 %}
                             <span class="alert-low">● Low Stock</span>
                         {% elif total_pieces < 200 %}
                             <span style="color: #f57f17;">● Medium</span>
                         {% else %}
                             <span class="status-ok">● In Stock</span>
+                        {% endif %}
+                        <br>
+                        <!-- Expiry Status -->
+                        {% if batch.expiry_date %}
+                            {% if batch.expiry_date < today %}
+                                <span class="status-badge status-expired">Expired</span>
+                            {% elif batch.expiry_date <= six_months_from_now %}
+                                <span class="status-badge status-near-expiry">Near Expiry</span>
+                            {% else %}
+                                <span class="status-badge status-good">Good</span>
+                            {% endif %}
                         {% endif %}
                     </td>
                 </tr>

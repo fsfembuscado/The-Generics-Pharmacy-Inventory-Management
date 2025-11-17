@@ -23,9 +23,22 @@ class RefundCreateForm(forms.Form):
         ('overcharge', 'Overcharge/Pricing Error'),
         ('other', 'Other Reason'),
     ], label="Reason")
-    reason_details = forms.CharField(widget=forms.Textarea, required=False, label="Details")
-    payment_method = forms.ModelChoiceField(queryset=PaymentMethod.objects.filter(is_active=True), required=False, label="Refund Method")
-    reference_number = forms.CharField(max_length=100, required=False, label="Reference Number")
+    reason_details = forms.CharField(
+        widget=forms.Textarea(attrs={'placeholder': 'Explain the situation...', 'rows': 3}),
+        required=False,
+        label="Details"
+    )
+    payment_method = forms.ModelChoiceField(
+        queryset=PaymentMethod.objects.filter(is_active=True),
+        required=False,
+        label="Refund Method"
+    )
+    reference_number = forms.CharField(
+        max_length=100,
+        required=False,
+        label="Reference Number",
+        widget=forms.TextInput(attrs={'placeholder': 'Optional for cash'})
+    )
     confirm_full_refund = forms.BooleanField(required=True, label="Confirm full refund of sale amount")
 
 class RefundCreateView(LoginRequiredMixin, FormView):
@@ -897,6 +910,17 @@ def medicine_update_modal(request, pk):
         class Meta:
             model = Medicine
             fields = ['name','brand','category','product_type','dosage_form','strength','units_per_pack','packs_per_box','description']
+        
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # Add placeholders
+            self.fields['name'].widget.attrs.update({'placeholder': 'Enter medicine name'})
+            self.fields['brand'].widget.attrs.update({'placeholder': 'Enter brand name'})
+            self.fields['dosage_form'].widget.attrs.update({'placeholder': 'e.g., Tablet, Capsule, Syrup'})
+            self.fields['strength'].widget.attrs.update({'placeholder': 'e.g., 500mg, 250mg/5mL'})
+            self.fields['units_per_pack'].widget.attrs.update({'placeholder': 'Pieces per pack'})
+            self.fields['packs_per_box'].widget.attrs.update({'placeholder': 'Packs per box'})
+            self.fields['description'].widget.attrs.update({'placeholder': 'Product description (optional)'})
 
     if request.method == 'POST':
         form = MedicineModalForm(request.POST, instance=medicine)
@@ -923,6 +947,12 @@ def medicine_price_update_modal(request, pk):
         class Meta:
             model = Medicine
             fields = ['base_price','selling_price']
+        
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            # Add placeholders
+            self.fields['base_price'].widget.attrs.update({'placeholder': 'Enter base price (e.g., 5.50)'})
+            self.fields['selling_price'].widget.attrs.update({'placeholder': 'Enter selling price (e.g., 7.00)'})
 
     if request.method == 'POST':
         form = MedicinePriceModalForm(request.POST, instance=medicine)
@@ -985,8 +1015,32 @@ def medicine_create_modal(request):
     class MedicineCreateModalForm(forms.ModelForm):
         class Meta:
             model = Medicine
-            # Removed 'product_type' from create modal per request
-            fields = ['name','brand','category','dosage_form','strength','units_per_pack','packs_per_box','base_price','selling_price','description']
+            fields = ['name','brand','category','product_type','dosage_form','strength','units_per_pack','packs_per_box','base_price','selling_price','description']
+        
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            
+            # Add placeholders
+            self.fields['name'].widget.attrs.update({'placeholder': 'Enter medicine name (e.g., Paracetamol)'})
+            self.fields['brand'].widget.attrs.update({'placeholder': 'Enter brand name (e.g., Biogesic)'})
+            self.fields['dosage_form'].widget.attrs.update({'placeholder': 'e.g., Tablet, Capsule, Syrup'})
+            self.fields['strength'].widget.attrs.update({'placeholder': 'e.g., 500mg, 250mg/5mL'})
+            self.fields['units_per_pack'].widget.attrs.update({'placeholder': 'Pieces per pack'})
+            self.fields['packs_per_box'].widget.attrs.update({'placeholder': 'Packs per box'})
+            self.fields['base_price'].widget.attrs.update({'placeholder': 'Enter base price (e.g., 5.50)'})
+            self.fields['selling_price'].widget.attrs.update({'placeholder': 'Enter selling price (e.g., 7.00)'})
+            self.fields['description'].widget.attrs.update({'placeholder': 'Product description (optional)'})
+            
+            # Show all product types initially (user will select category first)
+            self.fields['product_type'].queryset = ProductType.objects.filter(is_deleted=False).order_by('name')
+            self.fields['product_type'].required = False  # Make optional since it depends on category
+            
+            if 'category' in self.data:
+                try:
+                    category_id = int(self.data.get('category'))
+                    self.fields['product_type'].queryset = ProductType.objects.filter(category_id=category_id, is_deleted=False).order_by('name')
+                except (ValueError, TypeError):
+                    pass
 
     if request.method == 'POST':
         try:
@@ -1602,7 +1656,10 @@ class DispenseLineItemForm(forms.Form):
     quantity = forms.IntegerField(
         min_value=1,
         label="Quantity",
-        widget=forms.NumberInput(attrs={'class': 'form-control quantity-input'})
+        widget=forms.NumberInput(attrs={
+            'class': 'form-control quantity-input',
+            'placeholder': 'Enter quantity'
+        })
     )
     UNIT_CHOICES = [("piece", "Piece"), ("pack", "Pack"), ("box", "Box")]
     unit_type = forms.ChoiceField(
@@ -1660,12 +1717,19 @@ class DispenseView(LoginRequiredMixin, FormView):
         # Convert Decimal fields to float
         medicines_list = []
         for med in medicines:
+            medicine_obj = Medicine.objects.get(pk=med['id'])
+            stock_info = medicine_obj.get_available_stock()
+            
             medicines_list.append({
                 'id': med['id'],
                 'name': med['name'],
                 'selling_price': float(med['selling_price']) if med['selling_price'] else 0,
                 'units_per_pack': med['units_per_pack'] or 1,
-                'packs_per_box': med['packs_per_box'] or 1
+                'packs_per_box': med['packs_per_box'] or 1,
+                'available_pieces': stock_info['total_pieces'],
+                'available_boxes': stock_info['boxes'],
+                'available_packs': stock_info['packs'],
+                'available_loose_pieces': stock_info['pieces']
             })
         
         context['medicines_json'] = json.dumps(medicines_list)
@@ -1993,10 +2057,18 @@ class SalesReportView(LoginRequiredMixin, ManagerOrAdminRequiredMixin, ListView)
 
     def get_queryset(self):
         queryset = Sale.objects.select_related('user').prefetch_related('movements__medicine').all().order_by("-sale_date")
+        
+        # Date range filter
         start_date = self.request.GET.get("start_date")
         end_date = self.request.GET.get("end_date")
         if start_date and end_date:
             queryset = queryset.filter(sale_date__range=[start_date, end_date])
+        
+        # Medicine filter
+        medicine_id = self.request.GET.get("medicine")
+        if medicine_id:
+            queryset = queryset.filter(movements__medicine_id=medicine_id).distinct()
+        
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -2016,6 +2088,10 @@ class SalesReportView(LoginRequiredMixin, ManagerOrAdminRequiredMixin, ListView)
         context["net_sales"] = net_sales
         context["start_date"] = self.request.GET.get("start_date", "")
         context["end_date"] = self.request.GET.get("end_date", "")
+        context["medicine_id"] = self.request.GET.get("medicine", "")
+        
+        # Get all medicines for the filter dropdown
+        context["medicines"] = Medicine.objects.filter(is_deleted=False).order_by('name')
         
         return context
 
@@ -2047,7 +2123,10 @@ class TransferItemForm(forms.Form):
         ).order_by('name')
     
     medicine = forms.ModelChoiceField(queryset=Medicine.objects.none(), empty_label="-- Select medicine --")
-    quantity = forms.IntegerField(min_value=1)
+    quantity = forms.IntegerField(
+        min_value=1,
+        widget=forms.NumberInput(attrs={'placeholder': 'Enter quantity to transfer'})
+    )
     UNIT_CHOICES = (
         ("piece", "Piece"),
         ("pack", "Pack"),
@@ -2145,35 +2224,34 @@ class TransferView(LoginRequiredMixin, UserPassesTestMixin, View):
         TransferFormSet = formset_factory(TransferItemForm, extra=4)
         formset = TransferFormSet()
         
-        # Calculate available stock for each medicine
-        from django.db.models import Sum
-        stock_info = {}
-        batches = StockBatch.objects.filter(
+        # Get all medicines with available stock and their detailed info
+        medicines_with_stock = StockBatch.objects.filter(
             is_deleted=False,
             is_recalled=False,
             quantity__gt=0
-        ).values('medicine_id', 'medicine__units_per_pack', 'medicine__packs_per_box').annotate(
-            total_boxes=Sum('quantity')
-        )
+        ).values_list('medicine_id', flat=True).distinct()
         
-        for batch in batches:
-            med_id = batch['medicine_id']
-            total_boxes = batch['total_boxes'] or 0
-            units_per_pack = batch['medicine__units_per_pack'] or 1
-            packs_per_box = batch['medicine__packs_per_box'] or 1
-            
-            total_packs = total_boxes * packs_per_box
-            total_pieces = total_boxes * packs_per_box * units_per_pack
-            
-            stock_info[str(med_id)] = {
-                'boxes': total_boxes,
-                'packs': total_packs,
-                'pieces': total_pieces
-            }
+        medicines_data = []
+        for med_id in medicines_with_stock:
+            try:
+                medicine = Medicine.objects.get(pk=med_id)
+                stock_info = medicine.get_available_stock()
+                medicines_data.append({
+                    'id': med_id,
+                    'name': medicine.name,
+                    'available_pieces': stock_info['total_pieces'],
+                    'available_boxes': stock_info['boxes'],
+                    'available_packs': stock_info['packs'],
+                    'available_loose_pieces': stock_info['pieces'],
+                    'units_per_pack': stock_info['units_per_pack'],
+                    'packs_per_box': stock_info['packs_per_box']
+                })
+            except Medicine.DoesNotExist:
+                pass
         
         return render(request, "transfer/transfer_form.html", {
             "formset": formset,
-            "stock_info": json.dumps(stock_info),
+            "medicines_json": json.dumps(medicines_data),
             "is_manager_or_admin": is_manager_or_admin(request.user),
             "user_role": get_user_role_display(request.user)
         })
@@ -2308,9 +2386,17 @@ class ActualInventoryView(LoginRequiredMixin, ListView):
         return queryset
     
     def get_context_data(self, **kwargs):
+        from datetime import date, timedelta
+        
         context = super().get_context_data(**kwargs)
         user = self.request.user
         context["is_manager_or_admin"] = is_manager_or_admin(user)
+        
+        # Add date references for expiry status calculation
+        today = date.today()
+        six_months_from_now = today + timedelta(days=180)
+        context['today'] = today
+        context['six_months_from_now'] = six_months_from_now
         
         # Get status filter
         status_filter = self.request.GET.get('status', 'all')

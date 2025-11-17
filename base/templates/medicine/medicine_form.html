@@ -17,12 +17,13 @@
   </div>
   {% endif %}
 
-  <form method="post">
+  <form method="post" id="medicine-form">
     {% csrf_token %}
 
     <p><label for="id_name">Name:</label> {{ form.name }}</p>
     <p><label for="id_brand">Brand:</label> {{ form.brand }}</p>
     <p><label for="id_category">Category:</label> {{ form.category }}</p>
+    <p><label for="id_product_type">Product Type:</label> {{ form.product_type }}</p>
     <p><label for="id_dosage_form">Dosage Form:</label> {{ form.dosage_form }}</p>
     <p><label for="id_strength">Dosage Strength:</label> {{ form.strength }}</p>
 
@@ -50,4 +51,36 @@
     {% endif %}
   </form>
 </div>
+
+<script>
+// Dynamic product type loading based on category selection
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryField = document.querySelector('#medicine-form select[name="category"]');
+    const productTypeField = document.querySelector('#medicine-form select[name="product_type"]');
+    
+    if (categoryField && productTypeField) {
+        categoryField.addEventListener('change', function() {
+            const categoryId = this.value;
+            
+            // Clear current product type options
+            productTypeField.innerHTML = '<option value="">---------</option>';
+            
+            if (categoryId) {
+                // Fetch product types for selected category
+                fetch(`/api/product-types/?category=${categoryId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(productType => {
+                            const option = document.createElement('option');
+                            option.value = productType.id;
+                            option.textContent = productType.name;
+                            productTypeField.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error loading product types:', error));
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

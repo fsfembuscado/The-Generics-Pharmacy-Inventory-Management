@@ -448,6 +448,42 @@ class Medicine(SoftDeleteModel):
     @property
     def total_pieces(self):
         return self.box_quantity * self.packs_per_box * self.units_per_pack
+    
+    def get_available_stock(self):
+        """
+        Calculate total available stock in pieces across all valid batches.
+        Returns dict with pieces, packs, and boxes.
+        """
+        from django.db.models import Sum, Q
+        
+        # Sum total pieces from all non-deleted, non-recalled batches
+        batches = self.batches.filter(
+            is_deleted=False,
+            is_recalled=False
+        )
+        
+        total_pieces = 0
+        for batch in batches:
+            total_pieces += batch.total_pieces
+        
+        units_per_pack = self.units_per_pack or 1
+        packs_per_box = self.packs_per_box or 1
+        pieces_per_box = units_per_pack * packs_per_box
+        
+        # Calculate equivalents
+        total_boxes = total_pieces // pieces_per_box if pieces_per_box > 0 else 0
+        remaining_after_boxes = total_pieces % pieces_per_box if pieces_per_box > 0 else total_pieces
+        total_packs = remaining_after_boxes // units_per_pack if units_per_pack > 0 else 0
+        remaining_pieces = remaining_after_boxes % units_per_pack if units_per_pack > 0 else remaining_after_boxes
+        
+        return {
+            'total_pieces': total_pieces,
+            'boxes': total_boxes,
+            'packs': total_packs,
+            'pieces': remaining_pieces,
+            'units_per_pack': units_per_pack,
+            'packs_per_box': packs_per_box
+        }
 
 # --------------------------- PRICE HISTORY MODEL ---------------------------
 class PriceHistory(models.Model):

@@ -4,9 +4,11 @@
         <img src="{% static 'landingpage/photo/logo.png' %}" alt="TGP Logo">
     </div>
     <ul class="menu">
+        {% if is_manager_or_admin %}
         <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
             <a href="{% url 'dashboard' %}">Dashboard</a>
         </li>
+        {% endif %}
         
         {% if is_manager_or_admin %}
         <li class="{% if request.resolver_match.url_name == 'user-list' %}active{% endif %}">
@@ -92,21 +94,6 @@
                     <a href="{% url 'refund-list' %}">Refunds</a>
                 </li>
                 {% endif %}
-            </ul>
-        </li>
-
-        <!-- Orders -->
-        <li class="dropdown {% if request.resolver_match.url_name == 'ordering-list' or request.resolver_match.url_name == 'ordering-create' %}open{% endif %}">
-            <a href="javascript:void(0)" class="dropdown-toggle" onclick="toggleDropdown('dropdown-orders')">
-                Orders
-            </a>
-            <ul id="dropdown-orders" class="dropdown-menu {% if request.resolver_match.url_name == 'ordering-list' or request.resolver_match.url_name == 'ordering-create' %}open{% endif %}">
-                <li class="{% if request.resolver_match.url_name == 'ordering-create' %}active{% endif %}">
-                    <a href="{% url 'ordering-create' %}">New Order</a>
-                </li>
-                <li class="{% if request.resolver_match.url_name == 'ordering-list' %}active{% endif %}">
-                    <a href="{% url 'ordering-list' %}">Order List</a>
-                </li>
             </ul>
         </li>
 

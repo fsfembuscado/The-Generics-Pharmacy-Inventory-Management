@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <a href="{% url 'dashboard' %}">← Go back</a>
+    <a href="{% url 'dispense' %}">← Go back</a>
     <h1>{{ pharmacy_name }}</h1>
     <p><strong>Address:</strong> {{ pharmacy_address }}<br>
        <strong>Contact:</strong> {{ pharmacy_contact }}</p>
@@ -58,11 +58,38 @@
 
     <!-- Totals -->
     <div class="totals">
-        <p><strong>Subtotal:</strong> ₱{{ subtotal|floatformat:2 }}</p>
-        <p><strong>Discount ({{ discount_percentage|default:"0" }}%):</strong> -₱{{ discount|floatformat:2 }}</p>
-        <p><strong>Final Total:</strong> ₱{{ total|floatformat:2 }}</p>
-        <p><strong>Cash Received:</strong> ₱{{ cash_received|floatformat:2 }}</p>
-        <p><strong>Change:</strong> ₱{{ change_amount|floatformat:2 }}</p>
+        <p><strong>Subtotal:</strong> ₱<span id="subtotal">{{ subtotal|floatformat:2 }}</span></p>
+        <p><strong>Discount ({{ discount_percentage|default:"0" }}%):</strong> -₱<span id="discount">{{ discount|floatformat:2 }}</span></p>
+        <p><strong>VAT (12%):</strong> ₱<span id="vat">0.00</span></p>
+        <p><strong>Final Total:</strong> ₱<span id="finalTotal">{{ total|floatformat:2 }}</span></p>
+        <p><strong>Cash Received:</strong> ₱<span id="cashReceived">{{ cash_received|floatformat:2 }}</span></p>
+        <p><strong>Change:</strong> ₱<span id="change">{{ change_amount|floatformat:2 }}</span></p>
     </div>
+
+    <script>
+        // Calculate VAT and update totals on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const subtotal = parseFloat({{ subtotal }});
+            const discount = parseFloat({{ discount }});
+            const cashReceived = parseFloat({{ cash_received }});
+            
+            // Calculate amount after discount
+            const amountAfterDiscount = subtotal - discount;
+            
+            // Calculate 12% VAT
+            const vat = amountAfterDiscount * 0.12;
+            
+            // Calculate final total with VAT
+            const finalTotal = amountAfterDiscount + vat;
+            
+            // Calculate change
+            const change = cashReceived - finalTotal;
+            
+            // Update the display
+            document.getElementById('vat').textContent = vat.toFixed(2);
+            document.getElementById('finalTotal').textContent = finalTotal.toFixed(2);
+            document.getElementById('change').textContent = change.toFixed(2);
+        });
+    </script>
 </body>
 </html>

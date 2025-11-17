@@ -47,6 +47,7 @@
                                 <th style="color: #fff;">Medicine</th>
                                 <th style="color: #fff;">Unit Type</th>
                                 <th style="color: #fff;">Quantity</th>
+                                <th style="color: #fff;">Available Stock</th>
                                 <th style="color: #fff;">Selling Price</th>
                                 <th style="width: 100px; color: #fff;">Action</th>
                             </tr>
@@ -57,6 +58,7 @@
                                 <td>{{ form.medicine }}</td>
                                 <td>{{ form.unit_type }}</td>
                                 <td>{{ form.quantity }}</td>
+                                <td class="available-stock" style="font-size: 0.9em; color: #666;"></td>
                                 <td class="line-total">₱0.00</td>
                                 <td>
                                     <button type="button" class="btn-remove" onclick="removeRow(this)">Remove</button>
@@ -193,6 +195,7 @@ document.getElementById('add-row').addEventListener('click', function(e) {
         select.selectedIndex = 0;
     });
     newRow.querySelector('.line-total').textContent = '₱0.00';
+    newRow.querySelector('.available-stock').textContent = '';
     
     tbody.appendChild(newRow);
     formCount++;
@@ -238,6 +241,7 @@ function updateRowTotal(row) {
     const medicineSelect = row.querySelector('select[name*="medicine"]');
     const qtyInput = row.querySelector('input[name*="quantity"]');
     const unitSelect = row.querySelector('select[name*="unit_type"]');
+    const stockDisplay = row.querySelector('.available-stock');
     
     console.log('updateRowTotal called', {
         hasMedicine: !!medicineSelect,
@@ -256,8 +260,9 @@ function updateRowTotal(row) {
     
     console.log('Row values:', { medicineId, qty, unitType });
     
-    if (!medicineId || qty <= 0) {
+    if (!medicineId) {
         row.querySelector('.line-total').textContent = '₱0.00';
+        if (stockDisplay) stockDisplay.textContent = '';
         recalculateTotals();
         return;
     }
@@ -266,18 +271,84 @@ function updateRowTotal(row) {
     if (!medicine) {
         console.log('Medicine not found:', medicineId);
         row.querySelector('.line-total').textContent = '₱0.00';
+        if (stockDisplay) stockDisplay.textContent = '';
         recalculateTotals();
         return;
     }
     
-    const perPiecePrice = parseFloat(medicine.selling_price || 0);
+    // Display available stock based on selected unit type
+    if (stockDisplay) {
+        const availablePieces = medicine.available_pieces || 0;
+        const unitsPerPack = medicine.units_per_pack || 1;
+        const packsPerBox = medicine.packs_per_box || 1;
+        const piecesPerBox = unitsPerPack * packsPerBox;
+        
+        let stockText = '';
+        if (unitType === 'piece') {
+            stockText = `${availablePieces} pcs`;
+            // Show equivalent in packs and boxes
+            const availablePacks = Math.floor(availablePieces / unitsPerPack);
+            const availableBoxes = Math.floor(availablePieces / piecesPerBox);
+            if (availablePacks > 0) stockText += ` (${availablePacks} packs`;
+            if (availableBoxes > 0) stockText += `, ${availableBoxes} boxes)`;
+            else if (availablePacks > 0) stockText += ')';
+        } else if (unitType === 'pack') {
+            const availablePacks = Math.floor(availablePieces / unitsPerPack);
+            stockText = `${availablePacks} packs`;
+            // Show equivalent in pieces and boxes
+            const availableBoxes = Math.floor(availablePieces / piecesPerBox);
+            stockText += ` (${availablePieces} pcs`;
+            if (availableBoxes > 0) stockText += `, ${availableBoxes} boxes)`;
+            else stockText += ')';
+        } else if (unitType === 'box') {
+            const availableBoxes = Math.floor(availablePieces / piecesPerBox);
+            stockText = `${availableBoxes} boxes`;
+            // Show equivalent in pieces and packs
+            const availablePacks = Math.floor(availablePieces / unitsPerPack);
+            stockText += ` (${availablePieces} pcs, ${availablePacks} packs)`;
+        }
+        stockDisplay.textContent = stockText;
+        stockDisplay.style.color = '#28a745';
+    }
     
-    // Convert to pieces
+    // Validate quantity against available stock
+    const perPiecePrice = parseFloat(medicine.selling_price || 0);
     let pieces = qty;
     if (unitType === 'pack') {
         pieces = qty * (medicine.units_per_pack || 1);
     } else if (unitType === 'box') {
         pieces = qty * (medicine.packs_per_box || 1) * (medicine.units_per_pack || 1);
+    }
+    
+    const availablePieces = medicine.available_pieces || 0;
+    
+    // Check if quantity exceeds available stock
+    if (pieces > availablePieces) {
+        // Set input to max available
+        let maxQty = qty;
+        if (unitType === 'piece') {
+            maxQty = availablePieces;
+        } else if (unitType === 'pack') {
+            maxQty = Math.floor(availablePieces / (medicine.units_per_pack || 1));
+        } else if (unitType === 'box') {
+            maxQty = Math.floor(availablePieces / ((medicine.packs_per_box || 1) * (medicine.units_per_pack || 1)));
+        }
+        
+        qtyInput.value = maxQty;
+        pieces = Math.min(pieces, availablePieces);
+        
+        // Show error message
+        if (stockDisplay) {
+            stockDisplay.textContent = `⚠️ Max available: ${maxQty} ${unitType}(s)`;
+            stockDisplay.style.color = '#dc3545';
+        }
+        
+        // Show alert once
+        if (!qtyInput.dataset.alertShown) {
+            alert(`Insufficient stock! Maximum available: ${maxQty} ${unitType}(s)`);
+            qtyInput.dataset.alertShown = 'true';
+            setTimeout(() => delete qtyInput.dataset.alertShown, 2000);
+        }
     }
     
     const lineTotal = pieces * perPiecePrice;

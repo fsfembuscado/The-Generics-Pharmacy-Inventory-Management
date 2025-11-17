@@ -195,12 +195,6 @@
                                 <span class="price-same">→</span>
                             {% endif %}
                             ₱{{ change.new_base_price|floatformat:2 }}
-                            {% if change.old_base_price != change.new_base_price %}
-                                <small style="display: block; color: #666;">
-                                    {% widthratio change.new_base_price change.old_base_price 100|add:"-100" as percent_change %}
-                                    ({{ percent_change|floatformat:1 }}%)
-                                </small>
-                            {% endif %}
                         </td>
                         <td>
                             ₱{{ change.old_selling_price|floatformat:2 }}
@@ -212,12 +206,6 @@
                                 <span class="price-same">→</span>
                             {% endif %}
                             ₱{{ change.new_selling_price|floatformat:2 }}
-                            {% if change.old_selling_price != change.new_selling_price %}
-                                <small style="display: block; color: #666;">
-                                    {% widthratio change.new_selling_price change.old_selling_price 100|add:"-100" as percent_change %}
-                                    ({{ percent_change|floatformat:1 }}%)
-                                </small>
-                            {% endif %}
                         </td>
                         <td>{{ change.changed_by.username|default:"System" }}</td>
                         <td><small>{{ change.reason|default:"-" }}</small></td>

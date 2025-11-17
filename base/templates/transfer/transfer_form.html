@@ -58,7 +58,7 @@
                                 <th style="color: #fff;">Medicine</th>
                                 <th style="color: #fff;">Unit Type</th>
                                 <th style="color: #fff;">Quantity</th>
-                                <th style="width: 120px; color: #fff;">Available</th>
+                                <th style="width: 180px; color: #fff;">Available Stock</th>
                                 <th style="width: 80px; color: #fff;">Action</th>
                             </tr>
                         </thead>
@@ -88,8 +88,12 @@
     </div>
 
 <script>
-// Stock information from server
-const stockInfo = {{ stock_info|safe }};
+// Medicine data from server
+const medicinesData = {{ medicines_json|safe }};
+const medicineMap = {};
+medicinesData.forEach(med => {
+    medicineMap[med.id] = med;
+});
 
 function toggleDropdown(id) {
     const dropdown = document.getElementById(id);
@@ -100,7 +104,7 @@ function toggleDropdown(id) {
     dropdownLi.classList.toggle('open');
 }
 
-// Update available stock display and set max quantity
+// Update available stock display and validate quantity
 function updateStockInfo(row) {
     const medicineSelect = row.querySelector('select[name*="medicine"]');
     const unitSelect = row.querySelector('select[name*="unit_type"]');
@@ -110,34 +114,71 @@ function updateStockInfo(row) {
     if (!medicineSelect || !unitSelect || !quantityInput || !availableCell) return;
     
     const medicineId = medicineSelect.value;
-    const unitType = unitSelect.value;
+    const unitType = unitSelect.value || 'box';
+    const qty = parseInt(quantityInput.value || 0);
     
-    if (medicineId && stockInfo[medicineId]) {
-        const stock = stockInfo[medicineId];
-        let maxQty = 0;
-        let displayText = '-';
+    if (!medicineId) {
+        availableCell.textContent = '-';
+        availableCell.style.color = '#666';
+        quantityInput.removeAttribute('max');
+        return;
+    }
+    
+    const medicine = medicineMap[medicineId];
+    if (!medicine) {
+        availableCell.textContent = '-';
+        availableCell.style.color = '#666';
+        quantityInput.removeAttribute('max');
+        return;
+    }
+    
+    const availablePieces = medicine.available_pieces || 0;
+    const unitsPerPack = medicine.units_per_pack || 1;
+    const packsPerBox = medicine.packs_per_box || 1;
+    const piecesPerBox = unitsPerPack * packsPerBox;
+    
+    let maxQty = 0;
+    let stockText = '';
+    
+    // Calculate max quantity and display text based on unit type
+    if (unitType === 'box') {
+        maxQty = Math.floor(availablePieces / piecesPerBox);
+        stockText = `${maxQty} boxes`;
+        const availablePacks = Math.floor(availablePieces / unitsPerPack);
+        stockText += ` (${availablePieces} pcs, ${availablePacks} packs)`;
+    } else if (unitType === 'pack') {
+        maxQty = Math.floor(availablePieces / unitsPerPack);
+        stockText = `${maxQty} packs`;
+        const availableBoxes = Math.floor(availablePieces / piecesPerBox);
+        stockText += ` (${availablePieces} pcs, ${availableBoxes} boxes)`;
+    } else if (unitType === 'piece') {
+        maxQty = availablePieces;
+        stockText = `${availablePieces} pcs`;
+        const availablePacks = Math.floor(availablePieces / unitsPerPack);
+        const availableBoxes = Math.floor(availablePieces / piecesPerBox);
+        if (availablePacks > 0) stockText += ` (${availablePacks} packs`;
+        if (availableBoxes > 0) stockText += `, ${availableBoxes} boxes)`;
+        else if (availablePacks > 0) stockText += ')';
+    }
+    
+    // Set max attribute
+    quantityInput.setAttribute('max', maxQty);
+    
+    // Validate and limit input
+    if (qty > maxQty) {
+        quantityInput.value = maxQty;
+        availableCell.textContent = `⚠️ Max: ${maxQty} ${unitType}(s)`;
+        availableCell.style.color = '#dc3545';
         
-        if (unitType === 'piece') {
-            maxQty = stock.pieces;
-            displayText = `${stock.pieces} pcs`;
-        } else if (unitType === 'pack') {
-            maxQty = stock.packs;
-            displayText = `${stock.packs} packs`;
-        } else if (unitType === 'box') {
-            maxQty = stock.boxes;
-            displayText = `${stock.boxes} boxes`;
-        }
-        
-        quantityInput.setAttribute('max', maxQty);
-        availableCell.textContent = displayText;
-        
-        // Validate current value against max
-        if (parseInt(quantityInput.value) > maxQty) {
-            quantityInput.value = maxQty;
+        // Show alert once
+        if (!quantityInput.dataset.alertShown) {
+            alert(`Insufficient stock! Maximum available: ${maxQty} ${unitType}(s)`);
+            quantityInput.dataset.alertShown = 'true';
+            setTimeout(() => delete quantityInput.dataset.alertShown, 2000);
         }
     } else {
-        quantityInput.removeAttribute('max');
-        availableCell.textContent = '-';
+        availableCell.textContent = stockText;
+        availableCell.style.color = '#28a745';
     }
 }
 
@@ -160,6 +201,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (unitSelect) {
                 unitSelect.addEventListener('change', () => updateStockInfo(row));
+            }
+            
+            // Add quantity input listener
+            const quantityInput = row.querySelector('input[name*="quantity"]');
+            if (quantityInput) {
+                quantityInput.addEventListener('input', () => updateStockInfo(row));
             }
             
             // Initial update
@@ -227,12 +274,16 @@ document.getElementById('add-row').addEventListener('click', function() {
     // Add event listeners to the new row
     const medicineSelect = newRow.querySelector('select[name*="medicine"]');
     const unitSelect = newRow.querySelector('select[name*="unit_type"]');
+    const quantityInput = newRow.querySelector('input[name*="quantity"]');
     
     if (medicineSelect) {
         medicineSelect.addEventListener('change', () => updateStockInfo(newRow));
     }
     if (unitSelect) {
         unitSelect.addEventListener('change', () => updateStockInfo(newRow));
+    }
+    if (quantityInput) {
+        quantityInput.addEventListener('input', () => updateStockInfo(newRow));
     }
     
     // Initial update

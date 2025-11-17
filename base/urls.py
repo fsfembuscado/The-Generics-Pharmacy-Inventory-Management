@@ -6,7 +6,7 @@ from . views import (
     StockBatchListView, StockBatchCreateView, StockBatchDeleteView, StockBatchUpdateView, DispenseView, StockMovementListView, SalesReportView, process_expired_stock_view,
     PriceHistoryView, ActualInventoryView, ExpirationMonitorView, MedicinePriceUpdateView,
     medicine_update_modal, medicine_price_update_modal, batch_update_modal,
-    medicine_create_modal, batch_create_modal, batch_recall_modal,
+    medicine_create_modal, batch_create_modal, batch_recall_modal, load_product_types,
     RefundCreateView, RefundListView, RefundDetailView, RefundApproveView,
     OrderingListView, OrderingCreateView, OrderingDetailView, OrderingConfirmView, OrderingReadyView, OrderingCancelView, OrderingFulfillView,
     NotificationListView, mark_notification_read, mark_all_notifications_read, delete_notification
@@ -42,6 +42,7 @@ urlpatterns = [
     path("medicines/<int:pk>/update-modal/", medicine_update_modal, name="medicine-update-modal"),
     path("medicines/<int:pk>/price-modal/", medicine_price_update_modal, name="medicine-price-update-modal"),
     path("medicines/<int:pk>/delete/", MedicineDeleteView.as_view(), name="medicine-delete"),
+    path("api/product-types/", load_product_types, name="load-product-types"),
     path("batches/", StockBatchListView.as_view(), name="batch-list"),
     path("batches/add/", StockBatchCreateView.as_view(), name="batch-add"),
     path("batches/add-modal/", batch_create_modal, name="batch-add-modal"),

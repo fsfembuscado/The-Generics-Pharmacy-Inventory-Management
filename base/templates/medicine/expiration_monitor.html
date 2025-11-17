@@ -74,6 +74,14 @@
             background: #d32f2f;
             color: white;
         }
+        .status-near-expiry {
+            background: #ffa000;
+            color: white;
+        }
+        .status-good {
+            background: #388e3c;
+            color: white;
+        }
         .status-critical {
             background: #f57c00;
             color: white;
@@ -191,8 +199,10 @@
                         <td>
                             {% if batch.expiry_date < today %}
                                 <span class="status-badge status-expired">● Expired</span>
+                            {% elif batch.expiry_date <= six_months_from_now %}
+                                <span class="status-badge status-near-expiry">● Near Expiry</span>
                             {% else %}
-                                <span style="color: #388e3c;">● Good</span>
+                                <span class="status-badge status-good">● Good</span>
                             {% endif %}
                         </td>
                         <td>
